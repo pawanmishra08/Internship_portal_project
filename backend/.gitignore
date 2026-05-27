@@ -1,0 +1,44 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.sqlite3
+media/
+staticfiles/
+# If using local settings
+local_settings.py
+
+# Environments
+.env
+.env.*
+
+# Tests
+.pytest_cache/
+.coverage
+
+# Editors
+.vscode/
+.idea/
+.DS_Store
+
+# macOS
+.AppleDouble
+.LSOverride
