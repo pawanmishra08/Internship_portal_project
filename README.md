@@ -29,6 +29,7 @@ A full-stack internship portal built with a Django REST backend and a React + Ty
 - React Router
 
 ## Project Structure
+...
 internship-portal/
 │
 ├── backend/                                    # Django Backend
@@ -232,6 +233,7 @@ internship-portal/
 └── README.md                                   # Project overview and setup
 
 
+...
 ```text
 Internship-Portal-Project/
 ├── backend/
