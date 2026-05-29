@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    CompanyListView,
     CompanyProfileView,
     CompanyPublicDetailView,
     JobListCreateView,
@@ -8,6 +9,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('', CompanyListView.as_view()),                     # list companies
     path('profile/', CompanyProfileView.as_view()),          # own profile
     path('<int:pk>/', CompanyPublicDetailView.as_view()),    # public profile
     path('<int:pk>/jobs/', CompanyJobsView.as_view()),       # jobs by company

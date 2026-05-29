@@ -4,12 +4,14 @@ import Sidebar from './Sidebar'
 
 export default function Layout() {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
-      <div style={{ flex: 1 }}>
+      <div className="flex-1 flex flex-col">
         <Navbar />
-        <main style={{ padding: '20px' }}>
-          <Outlet />
+        <main className="flex-1 overflow-auto">
+          <div className="p-6 md:p-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

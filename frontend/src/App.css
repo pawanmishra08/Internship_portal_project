@@ -1,74 +1,75 @@
-/* Minimal, human-coded styles */
-/* Basic reset */
-* { box-sizing: border-box; }
-html,body,#root { height: 100%; }
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  color: #111;
-  background: #fafafa;
-  line-height: 1.4;
-  font-size: 16px;
+/* App shell and layout */
+.app-shell {
+  @apply min-h-screen bg-gray-50;
 }
 
-.app-shell { min-height: 100vh; }
-
-/* Header & nav */
-header {
-  border-bottom: 1px solid #e5e7eb;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.app-loader {
+  @apply fixed inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-50 to-indigo-100 z-50;
 }
 
-aside { width: 200px; border-right: 1px solid #e5e7eb; padding: 12px; }
-
-nav a { display: block; color: #111; text-decoration: none; padding: 8px 6px; }
-nav a:hover { background: #f3f4f6; }
-
-main { padding: 18px; }
-
-/* Simple container */
-.container { max-width: 960px; margin: 0 auto; }
-
-/* Cards and panels */
-.card { background: #fff; border: 1px solid #e5e7eb; padding: 16px; border-radius: 6px; }
-
-/* Map previous component classes to simple card styles */
-.hero-panel, .auth-card, .dashboard-panel, .metric-card, .mini-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  padding: 16px;
-  border-radius: 6px;
+.app-loader span {
+  @apply text-lg font-semibold text-indigo-900;
 }
 
-/* Forms */
-label { display: block; font-weight: 600; margin-bottom: 6px; }
-input[type="text"], input[type="email"], input[type="password"], select, textarea {
-  width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 4px; background: #fff;
+/* Animations */
+@keyframes fadeIn {
+  from {
+    @apply opacity-0 translate-y-2;
+  }
+  to {
+    @apply opacity-100 translate-y-0;
+  }
 }
 
-.field { margin-bottom: 12px; }
+@keyframes slideInLeft {
+  from {
+    @apply opacity-0 -translate-x-4;
+  }
+  to {
+    @apply opacity-100 translate-x-0;
+  }
+}
 
-.form-footer { display:flex; gap:8px; align-items:center; }
+@keyframes slideInRight {
+  from {
+    @apply opacity-0 translate-x-4;
+  }
+  to {
+    @apply opacity-100 translate-x-0;
+  }
+}
 
-/* Buttons */
-.button { padding: 8px 12px; border: 1px solid #111; background: #111; color: #fff; border-radius: 4px; cursor: pointer; }
-.secondary-button { padding: 8px 12px; border: 1px solid #d1d5db; background: transparent; border-radius: 4px; cursor: pointer; }
+@keyframes pulse-glow {
+  0%, 100% {
+    @apply opacity-100;
+  }
+  50% {
+    @apply opacity-50;
+  }
+}
 
-.tab-button { padding: 8px 10px; border: 1px solid #d1d5db; background: #fff; border-radius: 4px; }
-.tab-button.active { background: #111; color: #fff; border-color: #111; }
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
 
-.alert { border: 1px solid #fca5a5; background: #fff5f5; padding: 10px; color: #991b1b; border-radius:4px; }
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s ease-out forwards;
+}
 
-/* Dashboard metrics */
-.metric-grid { display:flex; gap:12px; }
-.metric { background:#fff; border:1px solid #e5e7eb; padding:12px; border-radius:6px; flex:1 }
+.animate-slide-in-right {
+  animation: slideInRight 0.4s ease-out forwards;
+}
 
-/* Responsive */
-@media (max-width: 768px) {
-  aside { display: none; }
-  .container { padding: 0 12px; }
+/* Utility classes */
+.glass {
+  @apply backdrop-blur-md bg-white/80 border border-white/20;
+}
+
+.shadow-glow {
+  @apply shadow-2xl shadow-indigo-500/20;
+}
+
+.gradient-bg {
+  @apply bg-gradient-to-br from-indigo-50 via-white to-indigo-50;
 }
 

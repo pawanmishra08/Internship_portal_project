@@ -8,6 +8,8 @@ import Layout from './components/Layout'
 import InternshipsPage from './pages/InternshipsPage'
 import ApplicationsPage from './pages/ApplicationsPage'
 import CompaniesPage from './pages/CompaniesPage'
+import StudentProfilePage from './pages/StudentProfilePage'
+import StudentsPage from './pages/StudentsPage'
 
 function EntryRedirect() {
   const { status } = useAuth()
@@ -35,6 +37,8 @@ function App() {
             <Route path="/internships" element={<InternshipsPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/companies" element={<CompaniesPage />} />
+            <Route path="/profile" element={<StudentProfilePage />} />
+            <Route path="/students" element={<StudentsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<EntryRedirect />} />

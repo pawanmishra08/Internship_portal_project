@@ -15,6 +15,22 @@ from .serializers import (
 from .permissions import IsJobOwner, IsVerifiedCompany
 
 
+class CompanyListView(generics.ListAPIView):
+    """GET /api/companies/ → list companies for students/admin."""
+    queryset = CompanyProfile.objects.select_related('user')
+    serializer_class = CompanyProfileSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['company_name', 'industry', 'location']
+    filterset_fields = ['is_verified', 'industry']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.role == 'student':
+            return queryset.filter(is_verified=True)
+        return queryset
+
+
 # ── Company Profile ───────────────────────────────────────────
 
 class CompanyProfileView(APIView):
