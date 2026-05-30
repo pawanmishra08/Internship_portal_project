@@ -23,16 +23,16 @@ export default function Sidebar() {
   const visibleItems = navItems.filter((item) => !user || item.roles.includes(user.role))
 
   return (
-    <aside className="w-72 min-h-screen bg-gradient-to-b from-gray-900 to-gray-800 border-r border-gray-700 shadow-xl flex flex-col">
+    <aside className="w-72 min-h-screen border-r shadow-xl flex flex-col" style={{ background: '#1f1f1c', borderColor: '#353530' }}>
       {/* Logo Section */}
-      <div className="p-6 border-b border-gray-700">
+      <div className="p-6 border-b" style={{ borderColor: '#353530' }}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center font-black text-lg text-white shadow-lg">
+          <div className="w-12 h-12 rounded-lg flex items-center justify-center font-black text-lg text-white shadow-lg" style={{ background: '#f0efe9', color: '#1a1a18', fontFamily: "'DM Serif Display', serif" }}>
             IP
           </div>
           <div>
-            <h1 className="text-xl font-bold text-white">Internship</h1>
-            <p className="text-xs text-indigo-300 uppercase tracking-widest mt-1">{title}</p>
+            <h1 className="text-xl text-white" style={{ fontFamily: "'DM Serif Display', serif", fontWeight: 400 }}>Internship</h1>
+            <p className="text-xs uppercase tracking-widest mt-1" style={{ color: '#aaa9a2' }}>{title}</p>
           </div>
         </div>
       </div>
@@ -46,9 +46,14 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/50'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'text-white shadow-lg'
+                  : 'text-gray-300 hover:text-white'
               }`
+            }
+            style={({ isActive }) =>
+              isActive
+                ? { background: '#2b2b27', boxShadow: '0 10px 25px rgba(0,0,0,0.25)' }
+                : { background: 'transparent' }
             }
           >
             <span className="text-lg">
@@ -105,9 +110,9 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-700 mt-auto text-center">
-        <p className="text-xs text-gray-500 uppercase tracking-widest">© 2026</p>
-        <p className="text-xs text-gray-400 mt-1">Internship Portal</p>
+      <div className="p-4 border-t mt-auto text-center" style={{ borderColor: '#353530' }}>
+        <p className="text-xs uppercase tracking-widest" style={{ color: '#77766f' }}>© 2026</p>
+        <p className="text-xs mt-1" style={{ color: '#aaa9a2' }}>Internship Portal</p>
       </div>
     </aside>
   )

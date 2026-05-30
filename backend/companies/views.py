@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from core.permissions import IsCompany, IsAdmin, IsStudent
 from .models import CompanyProfile, Job
@@ -80,6 +82,35 @@ class CompanyPublicDetailView(generics.RetrieveAPIView):
 
     def get_serializer_context(self):
         return {'request': self.request}
+
+
+class CompanyAdminDetailView(APIView):
+    """PATCH /api/companies/admin/<id>/  → admin verification/status updates"""
+    permission_classes = [IsAdmin]
+
+    def patch(self, request, pk):
+        profile = get_object_or_404(CompanyProfile.objects.select_related('user'), pk=pk)
+        serializer = CompanyProfileSerializer(
+            profile,
+            data=request.data,
+            partial=True,
+            context={'request': request},
+        )
+        if serializer.is_valid():
+            updated_profile = serializer.save()
+
+            if 'is_verified' in request.data:
+                is_verified = request.data.get('is_verified') in (True, 'true', 'True', '1', 1)
+                updated_profile.is_verified = is_verified
+                if is_verified and updated_profile.verified_at is None:
+                    updated_profile.verified_at = timezone.now()
+                elif not is_verified:
+                    updated_profile.verified_at = None
+                updated_profile.save(update_fields=['is_verified', 'verified_at'])
+
+            return Response(CompanyProfileSerializer(updated_profile, context={'request': request}).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ── Jobs ──────────────────────────────────────────────────────

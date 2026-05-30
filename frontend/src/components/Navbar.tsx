@@ -8,21 +8,21 @@ export default function Navbar() {
   const getRoleBadgeColor = (role?: string) => {
     switch (role) {
       case 'student':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-[#f0efe9] text-[#1a1a18]'
       case 'company':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-[#ecebe6] text-[#1a1a18]'
       case 'admin':
-        return 'bg-rose-100 text-rose-800'
+        return 'bg-[#e8e7e1] text-[#1a1a18]'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-[#f0efe9] text-[#1a1a18]'
     }
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b shadow-sm" style={{ borderColor: '#d4d4ce' }}>
       <div className="flex items-center justify-between gap-6 px-6 py-4">
         <div className="flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Welcome back</p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em]" style={{ color: '#aaa9a2' }}>Welcome back</p>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-3">
               {user?.full_name && (
@@ -36,9 +36,9 @@ export default function Navbar() {
                 </div>
               )}
               <div className="flex flex-col">
-                <span className="font-semibold text-gray-900">{user?.full_name}</span>
+                <span className="font-medium" style={{ color: '#1a1a18' }}>{user?.full_name}</span>
                 {user?.role === 'student' && (
-                  <a href="/profile" className="text-xs text-orange-600 mt-0.5">Complete your profile →</a>
+                  <a href="/profile" className="text-xs mt-0.5" style={{ color: '#888780' }}>Complete your profile →</a>
                 )}
               </div>
             </div>

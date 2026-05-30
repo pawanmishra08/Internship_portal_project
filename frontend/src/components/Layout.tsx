@@ -4,7 +4,7 @@ import Sidebar from './Sidebar'
 
 export default function Layout() {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen" style={{ background: 'linear-gradient(180deg, #fafaf8 0%, #f5f5f2 100%)' }}>
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Navbar />

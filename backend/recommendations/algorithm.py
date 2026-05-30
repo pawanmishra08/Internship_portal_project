@@ -64,6 +64,37 @@ def _completeness_score(student: StudentProfile) -> float:
     return round((filled / len(fields)) * 10, 2)
 
 
+def score_student_for_job(student: StudentProfile, job: Job) -> dict:
+    """Return a structured score payload for one student/job pair."""
+    student_skill_ids = set(student.skills.values_list('id', flat=True))
+    student_skill_names = set(student.skills.values_list('name', flat=True))
+    job_skill_ids = set(job.required_skills.values_list('id', flat=True))
+    job_skill_names = set(job.required_skills.values_list('name', flat=True))
+
+    skill_pts = _skill_score(student_skill_ids, job_skill_ids)
+    gpa_pts = _gpa_score(student.gpa)
+    avail_pts = _availability_score(student)
+    loc_pts = _location_score(student.location, job.location)
+    complete_pts = _completeness_score(student)
+
+    total = round(skill_pts + gpa_pts + avail_pts + loc_pts + complete_pts, 1)
+    matched = student_skill_names & job_skill_names
+    missing = job_skill_names - student_skill_names
+
+    return {
+        'score': total,
+        'matched_skills': sorted(matched),
+        'missing_skills': sorted(missing),
+        'breakdown': {
+            'skill_match': skill_pts,
+            'gpa': gpa_pts,
+            'availability': avail_pts,
+            'location': loc_pts,
+            'profile_completeness': complete_pts,
+        },
+    }
+
+
 def get_recommendations(student: StudentProfile, limit: int = 20) -> list:
     """
     Returns a list of dicts sorted by score:
@@ -100,32 +131,15 @@ def get_recommendations(student: StudentProfile, limit: int = 20) -> list:
         job_skill_ids = set(job.required_skills.values_list('id', flat=True))
         job_skill_names = set(job.required_skills.values_list('name', flat=True))
 
-        skill_pts    = _skill_score(student_skill_ids, job_skill_ids)
-        gpa_pts      = _gpa_score(student.gpa)
-        avail_pts    = _availability_score(student)
-        loc_pts      = _location_score(student.location, job.location)
-        complete_pts = _completeness_score(student)
-
-        total = skill_pts + gpa_pts + avail_pts + loc_pts + complete_pts
+        score_payload = score_student_for_job(student, job)
+        total = score_payload['score']
 
         if total < MIN_SCORE:
             continue
 
-        matched = student_skill_names & job_skill_names
-        missing = job_skill_names - student_skill_names
-
         results.append({
             'job': job,
-            'score': round(total, 1),
-            'matched_skills': sorted(matched),
-            'missing_skills': sorted(missing),
-            'breakdown': {
-                'skill_match': skill_pts,
-                'gpa': gpa_pts,
-                'availability': avail_pts,
-                'location': loc_pts,
-                'profile_completeness': complete_pts,
-            }
+            **score_payload,
         })
 
     results.sort(key=lambda x: x['score'], reverse=True)

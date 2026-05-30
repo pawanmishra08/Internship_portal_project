@@ -21,6 +21,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     full_name = serializers.CharField(source='user.full_name', read_only=True)
     resume_url = serializers.SerializerMethodField()
+    degree_preferences = serializers.JSONField(required=False)
+    projects = serializers.JSONField(required=False)
 
     class Meta:
         model = StudentProfile
@@ -28,8 +30,10 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             'id', 'email', 'full_name',
             'bio', 'phone', 'location',
             'university', 'degree', 'field_of_study',
+            'target_role', 'preferred_work_mode',
             'graduation_year', 'gpa',
             'resume', 'resume_url',
+            'degree_preferences', 'projects',
             'linkedin_url', 'github_url', 'portfolio_url',
             'skills', 'skill_ids',
             'available_from', 'is_available',

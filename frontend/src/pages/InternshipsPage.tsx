@@ -37,36 +37,36 @@ export default function InternshipsPage() {
   }, [user?.role])
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="page-shell">
+      <div className="page-container py-8">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Internships</p>
-            <h1 className="text-3xl font-semibold text-slate-900 mt-2">Browse opportunities</h1>
-            <p className="text-slate-600 mt-2">{user?.role === 'student' ? 'Explore active internships from verified employers.' : 'Review your job listings and keep them updated.'}</p>
+            <p className="page-kicker">Internships</p>
+            <h1 className="page-title">Browse opportunities</h1>
+            <p className="page-subtitle">{user?.role === 'student' ? 'Explore active internships from verified employers.' : 'Review your job listings and keep them updated.'}</p>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">View</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{jobs.length} roles</p>
+          <div className="rounded-3xl border border-[#d4d4ce] bg-white px-5 py-4 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.3em]" style={{ color: '#aaa9a2' }}>View</p>
+            <p className="mt-2 text-lg" style={{ color: '#1a1a18', fontFamily: "'DM Serif Display', serif" }}>{jobs.length} roles</p>
           </div>
         </div>
 
-        <div className="mb-6 flex items-center gap-4">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search internships by title or company..."
             className="input-field flex-1"
           />
-          <div className="text-sm text-slate-500">{jobs.length} roles</div>
+          <div className="rounded-full bg-[#f0efe9] px-4 py-2 text-sm font-medium" style={{ color: '#1a1a18' }}>{jobs.length} roles</div>
         </div>
 
-        {error && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
+        {error && <div className="mb-6 rounded-3xl border border-[#f09595] bg-[#fcebeb] p-4 text-[#a32d2d]">{error}</div>}
 
         {loading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">Loading internships…</div>
+          <div className="card p-10 text-center" style={{ color: '#888780' }}>Loading internships…</div>
         ) : jobs.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">No internships available yet.</div>
+          <div className="card p-10 text-center" style={{ color: '#888780' }}>No internships available yet.</div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {jobs.filter((job) => {
@@ -74,40 +74,40 @@ export default function InternshipsPage() {
               const q = searchQuery.toLowerCase()
               return job.title.toLowerCase().includes(q) || job.company_name.toLowerCase().includes(q)
             }).map((job) => (
-              <article key={job.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <article key={job.id} className="rounded-3xl border border-[#d4d4ce] bg-white p-6 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-sm text-slate-500">{job.company_name}</p>
-                    <h2 className="mt-2 text-xl font-semibold text-slate-900">{job.title}</h2>
-                    <p className="mt-3 text-sm text-slate-600">{job.location || 'Remote'} · {job.type.replace('_', ' ')}</p>
+                    <p className="text-sm" style={{ color: '#888780' }}>{job.company_name}</p>
+                    <h2 className="mt-2 text-xl" style={{ color: '#1a1a18', fontFamily: "'DM Serif Display', serif" }}>{job.title}</h2>
+                    <p className="mt-3 text-sm" style={{ color: '#888780' }}>{job.location || 'Remote'} · {job.type.replace('_', ' ')}</p>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-600">{job.status}</span>
+                    <span className="rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: '#1a1a18', background: '#f0efe9' }}>{job.status}</span>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {job.skill_names.slice(0, 4).map((skill) => (
-                    <span key={skill} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">{skill}</span>
+                    <span key={skill} className="rounded-full px-3 py-1 text-xs font-medium" style={{ background: '#f0efe9', color: '#1a1a18' }}>{skill}</span>
                   ))}
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-500 items-center">
-                  <span className="text-sm text-slate-600">
+                <div className="mt-5 flex flex-wrap items-center gap-4 text-sm" style={{ color: '#888780' }}>
+                  <span>
                     {job.stipend_min || job.stipend_max
                       ? `Rs. ${job.stipend_min ?? ''}${job.stipend_min && job.stipend_max ? `–${job.stipend_max}` : ''}/mo`
                       : 'Stipend: Negotiable'}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <span className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: '#f0efe9', color: '#1a1a18' }}>
                     {job.duration_months ? `${job.duration_months} months` : 'Duration TBD'}
                   </span>
-                  <span className="text-sm text-slate-500">
+                  <span>
                     {job.deadline ? `Apply by ${new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(job.deadline))}` : 'No deadline'}
                   </span>
                 </div>
 
                 {user?.role === 'student' && (
                   <div className="mt-4">
-                    <button onClick={() => { setSelectedJob(job); setCoverLetter('') }} 
-                      className="mt-4 w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition">
+                    <button onClick={() => { setSelectedJob(job); setCoverLetter('') }}
+                      className="mt-4 w-full rounded-full bg-[#1a1a18] px-4 py-2 text-xs uppercase tracking-[0.14em] font-medium text-white transition hover:bg-[#2a2a27]">
                       Apply now
                     </button>
                   </div>
@@ -127,14 +127,14 @@ export default function InternshipsPage() {
         {selectedJob && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedJob(null)} />
-            <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl">
-              <h3 className="text-xl font-bold text-slate-900">Apply to {selectedJob.title}</h3>
-              <p className="text-sm text-slate-600 mt-1">{selectedJob.company_name}</p>
+            <div className="relative w-full max-w-xl rounded-3xl border border-[#d4d4ce] bg-white p-6 shadow-xl">
+              <h3 className="text-xl font-bold" style={{ color: '#1a1a18' }}>Apply to {selectedJob.title}</h3>
+              <p className="mt-1 text-sm" style={{ color: '#888780' }}>{selectedJob.company_name}</p>
 
-              {applyError && <div className="mt-4 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-lg">{applyError}</div>}
+              {applyError && <div className="mt-4 rounded-3xl border border-red-100 bg-red-50 p-3 text-sm text-red-700">{applyError}</div>}
 
               <div className="mt-4">
-                <label className="block text-sm font-semibold text-slate-900 mb-2">Cover letter</label>
+                <label className="mb-2 block text-sm font-semibold" style={{ color: '#1a1a18' }}>Cover letter</label>
                 <textarea
                   value={coverLetter}
                   onChange={(e) => setCoverLetter(e.target.value)}
@@ -144,7 +144,7 @@ export default function InternshipsPage() {
               </div>
 
               <div className="mt-4 flex gap-3 justify-end">
-                <button type="button" onClick={() => setSelectedJob(null)} className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Cancel</button>
+                <button type="button" onClick={() => setSelectedJob(null)} className="rounded-full border border-[#d4d4ce] bg-white px-4 py-2 text-sm font-semibold" style={{ color: '#1a1a18' }}>Cancel</button>
                 <button
                   type="button"
                   disabled={applying}
@@ -156,7 +156,7 @@ export default function InternshipsPage() {
                     }
                     setApplying(true)
                     try {
-                      await createApplication({ job: selectedJob.id, cover_letter: coverLetter })
+                      await createApplication({ job_id: selectedJob.id, cover_letter: coverLetter })
                       setSelectedJob(null)
                       setCoverLetter('')
                       setApplySuccess('Application submitted successfully.')
@@ -167,7 +167,7 @@ export default function InternshipsPage() {
                       setApplying(false)
                     }
                   }}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                  className="rounded-full bg-[#1a1a18] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2a2a27]"
                 >
                   {applying ? 'Submitting…' : 'Submit application'}
                 </button>

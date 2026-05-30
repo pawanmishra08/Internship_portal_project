@@ -38,13 +38,20 @@ function normalizeEndpoint(endpoint: string) {
   return `${API_BASE}${endpoint}`
 }
 
+function parseFilename(contentDisposition: string | null) {
+  if (!contentDisposition) return null
+  const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(contentDisposition)
+  return decodeURIComponent(match?.[1] ?? match?.[2] ?? '') || null
+}
+
 export async function apiRequest<T>(endpoint: string, init: RequestInit = {}) {
   const token = getAccessToken()
+  const isFormData = init.body instanceof FormData
   const response = await fetch(normalizeEndpoint(endpoint), {
     ...init,
     headers: {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers ?? {}),
     },
@@ -59,6 +66,31 @@ export async function apiRequest<T>(endpoint: string, init: RequestInit = {}) {
   }
 
   return (await parseResponse(response)) as T
+}
+
+export async function apiDownload(endpoint: string) {
+  const token = getAccessToken()
+  const response = await fetch(normalizeEndpoint(endpoint), {
+    method: 'GET',
+    headers: {
+      Accept: '*/*',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+
+  if (!response.ok) {
+    const payload = await parseResponse(response)
+    const message = typeof payload === 'string'
+      ? payload
+      : payload?.detail || JSON.stringify(payload)
+    throw new Error(message || `Request failed with status ${response.status}`)
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: parseFilename(response.headers.get('content-disposition')),
+    contentType: response.headers.get('content-type') ?? 'application/octet-stream',
+  }
 }
 
 export async function apiGet<T>(endpoint: string, params?: Record<string, string | number | boolean>) {

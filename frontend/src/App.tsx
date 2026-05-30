@@ -10,6 +10,7 @@ import ApplicationsPage from './pages/ApplicationsPage'
 import CompaniesPage from './pages/CompaniesPage'
 import StudentProfilePage from './pages/StudentProfilePage'
 import StudentsPage from './pages/StudentsPage'
+import SkillsAdminPage from './pages/SkillsAdminPage'
 
 function EntryRedirect() {
   const { status } = useAuth()
@@ -39,6 +40,7 @@ function App() {
             <Route path="/companies" element={<CompaniesPage />} />
             <Route path="/profile" element={<StudentProfilePage />} />
             <Route path="/students" element={<StudentsPage />} />
+            <Route path="/admin/skills" element={<SkillsAdminPage />} />
           </Route>
         </Route>
         <Route path="*" element={<EntryRedirect />} />
