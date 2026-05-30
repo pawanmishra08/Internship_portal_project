@@ -68,120 +68,195 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl">
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left Panel - Hero */}
-          <div className="hidden md:flex flex-col justify-center">
-            <div className="inline-flex items-center gap-3 mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-2xl flex items-center justify-center font-bold text-2xl text-white">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+
+        .auth-root {
+          font-family: 'DM Sans', sans-serif;
+        }
+        .auth-serif {
+          font-family: 'DM Serif Display', serif;
+        }
+        .auth-input {
+          width: 100%;
+          padding: 9px 12px;
+          font-size: 14px;
+          font-family: 'DM Sans', sans-serif;
+          background: #f7f7f5;
+          border: 0.5px solid #d4d4ce;
+          border-radius: 6px;
+          color: #1a1a18;
+          outline: none;
+          transition: border-color 0.15s, background 0.15s;
+          appearance: none;
+        }
+        .auth-input:focus {
+          border-color: #1a1a18;
+          background: #ffffff;
+        }
+        .auth-input::placeholder {
+          color: #aaa9a2;
+        }
+        .role-opt {
+          padding: 8px;
+          text-align: center;
+          font-size: 13px;
+          border: 0.5px solid #d4d4ce;
+          border-radius: 6px;
+          cursor: pointer;
+          color: #888780;
+          transition: all 0.15s;
+          user-select: none;
+        }
+        .role-opt.selected {
+          border-color: #1a1a18;
+          color: #1a1a18;
+          background: #f7f7f5;
+          font-weight: 500;
+        }
+        .auth-tab {
+          padding: 0.5rem 0;
+          margin-right: 1.75rem;
+          font-size: 13px;
+          font-weight: 500;
+          background: none;
+          border: none;
+          border-bottom: 1.5px solid transparent;
+          cursor: pointer;
+          color: #aaa9a2;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          transition: color 0.15s, border-color 0.15s;
+          margin-bottom: -0.5px;
+        }
+        .auth-tab.active {
+          color: #1a1a18;
+          border-bottom-color: #1a1a18;
+        }
+      `}</style>
+
+      <main className="auth-root min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl rounded-xl overflow-hidden border border-gray-200 shadow-sm grid md:grid-cols-2">
+
+          {/* Left Panel */}
+          <div className="hidden md:flex flex-col justify-between p-12 bg-gray-50 border-r border-gray-200">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div
+                className="auth-serif w-9 h-9 rounded-lg flex items-center justify-center text-sm text-white"
+                style={{ background: '#1a1a18', letterSpacing: '-0.5px' }}
+              >
                 IP
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">Internship</h3>
-                <p className="text-sm text-indigo-600 font-semibold">Portal</p>
-              </div>
+              <span
+                className="text-xs font-medium tracking-widest uppercase"
+                style={{ color: '#888780' }}
+              >
+                Internship Portal
+              </span>
             </div>
 
-            <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-              Land Your Dream Internship
-            </h2>
+            {/* Hero */}
+            <div className="flex-1 flex flex-col justify-center py-10">
+              <h2
+                className="auth-serif text-4xl leading-tight mb-4"
+                style={{ color: '#1a1a18', fontWeight: 400 }}
+              >
+                Find your perfect{' '}
+                <em style={{ color: '#888780' }}>internship</em>
+                {' '}— faster.
+              </h2>
+              <p className="text-sm leading-relaxed max-w-xs" style={{ color: '#888780', fontWeight: 300 }}>
+                AI-matched roles, one-click applications, and real-time tracking — built for students who mean business.
+              </p>
+            </div>
 
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Connect with leading companies, apply to internships, and build your career. Student-first platform designed for success.
-            </p>
-
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl">✓</div>
-                <div>
-                  <p className="font-semibold text-gray-900">Secure Authentication</p>
-                  <p className="text-sm text-gray-600">JWT-based with automatic token refresh</p>
+            {/* Stats */}
+            <div className="flex gap-6">
+              {[
+                { num: '500+', label: 'Internships' },
+                { num: '200+', label: 'Companies' },
+                { num: 'AI', label: 'Matching' },
+              ].map(({ num, label }) => (
+                <div key={label} className="border-t pt-3" style={{ borderColor: '#d4d4ce' }}>
+                  <div className="auth-serif text-2xl" style={{ color: '#1a1a18' }}>{num}</div>
+                  <div className="text-xs uppercase tracking-widest mt-0.5 font-medium" style={{ color: '#aaa9a2' }}>
+                    {label}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl">✓</div>
-                <div>
-                  <p className="font-semibold text-gray-900">Role-Based Access</p>
-                  <p className="text-sm text-gray-600">Tailored experience for students, companies & admins</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl">✓</div>
-                <div>
-                  <p className="font-semibold text-gray-900">Smart Matching</p>
-                  <p className="text-sm text-gray-600">AI-powered job recommendations</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
           {/* Right Panel - Form */}
-          <div className="card shadow-2xl p-8 lg:p-10">
+          <div className="bg-white px-10 py-12 flex flex-col justify-center">
             {/* Tabs */}
-            <div className="flex gap-4 mb-8 border-b border-gray-200">
+            <div className="flex border-b mb-8" style={{ borderColor: '#e8e8e4' }}>
               <button
                 type="button"
-                onClick={() => setMode('login')}
-                className={`pb-3 px-2 font-semibold transition-all border-b-2 ${
-                  mode === 'login'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                onClick={() => { clearError(); setMode('login') }}
+                className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
               >
-                Sign In
+                Sign in
               </button>
               <button
                 type="button"
-                onClick={() => setMode('register')}
-                className={`pb-3 px-2 font-semibold transition-all border-b-2 ${
-                  mode === 'register'
-                    ? 'border-indigo-600 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
+                onClick={() => { clearError(); setMode('register') }}
+                className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
               >
-                Create Account
+                Create account
               </button>
             </div>
 
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {/* Heading */}
+            <h1 className="auth-serif text-3xl mb-1" style={{ color: '#1a1a18', fontWeight: 400 }}>
               {isRegister ? 'Get started' : 'Welcome back'}
             </h1>
-            <p className="text-gray-600 mb-8">
+            <p className="text-sm mb-7" style={{ color: '#888780', fontWeight: 300 }}>
               {isRegister
-                ? 'Join as a student or company to get started'
-                : 'Sign in to your account to continue'}
+                ? 'Join as a student or company.'
+                : 'Sign in to continue to your dashboard.'}
             </p>
 
-            <form className="space-y-5" onSubmit={handleSubmit}>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {/* Full Name */}
               {isRegister && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">Full Name</label>
+                  <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
+                    Full name
+                  </label>
                   <input
                     type="text"
                     placeholder="Jane Doe"
                     value={form.full_name}
                     onChange={(e) => updateField('full_name', e.target.value)}
                     required
-                    className="input-field"
+                    className="auth-input"
                   />
                 </div>
               )}
 
+              {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Email Address</label>
+                <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
+                  Email address
+                </label>
                 <input
                   type="email"
                   placeholder="jane@example.com"
                   value={form.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   required
-                  className="input-field"
+                  className="auth-input"
                 />
               </div>
 
+              {/* Password */}
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Password</label>
+                <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
+                  Password
+                </label>
                 <input
                   type="password"
                   placeholder="••••••••"
@@ -189,52 +264,88 @@ export default function AuthPage() {
                   onChange={(e) => updateField('password', e.target.value)}
                   minLength={5}
                   required
-                  className="input-field"
+                  className="auth-input"
                 />
               </div>
 
+              {/* Role Toggle */}
               {isRegister && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">I am a...</label>
-                  <select
-                    value={form.role}
-                    onChange={(e) => updateField('role', e.target.value as 'student' | 'company')}
-                    className="input-field"
-                  >
-                    <option value="student">Student</option>
-                    <option value="company">Company</option>
-                  </select>
+                  <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
+                    I am a
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {(['student', 'company'] as const).map((r) => (
+                      <div
+                        key={r}
+                        className={`role-opt ${form.role === r ? 'selected' : ''}`}
+                        onClick={() => updateField('role', r)}
+                      >
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
+              {/* Error */}
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div
+                  className="text-sm rounded-md px-3 py-2.5"
+                  style={{
+                    color: '#a32d2d',
+                    background: '#fcebeb',
+                    border: '0.5px solid #f09595',
+                  }}
+                >
                   {error}
                 </div>
               )}
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn btn-primary w-full"
+                className="w-full py-2.5 text-xs font-medium tracking-widest uppercase rounded-md transition-opacity disabled:opacity-50"
+                style={{
+                  background: '#1a1a18',
+                  color: '#ffffff',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
+                onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
+                onMouseOut={e => (e.currentTarget.style.opacity = '1')}
               >
-                {submitting ? 'Processing...' : isRegister ? 'Create Account' : 'Sign In'}
+                {submitting ? 'Processing…' : isRegister ? 'Create account' : 'Sign in'}
               </button>
 
+              {/* Switch Mode */}
               <button
                 type="button"
-                onClick={() => {
-                  clearError()
-                  setMode(mode === 'login' ? 'register' : 'login')
+                onClick={() => { clearError(); setMode(mode === 'login' ? 'register' : 'login') }}
+                className="w-full py-2.5 text-xs font-medium rounded-md transition-colors"
+                style={{
+                  background: 'none',
+                  color: '#888780',
+                  border: '0.5px solid #d4d4ce',
+                  fontFamily: "'DM Sans', sans-serif",
+                  cursor: 'pointer',
                 }}
-                className="btn btn-secondary w-full"
+                onMouseOver={e => {
+                  e.currentTarget.style.borderColor = '#1a1a18'
+                  e.currentTarget.style.color = '#1a1a18'
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.borderColor = '#d4d4ce'
+                  e.currentTarget.style.color = '#888780'
+                }}
               >
                 {isRegister ? 'Already have an account?' : "Don't have an account?"}
               </button>
             </form>
           </div>
+
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   )
 }

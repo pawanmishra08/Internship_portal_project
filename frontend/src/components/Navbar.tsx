@@ -24,11 +24,23 @@ export default function Navbar() {
         <div className="flex-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Welcome back</p>
           <div className="flex items-center gap-3 mt-2">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-400 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-                {user?.full_name.charAt(0).toUpperCase()}
+            <div className="flex items-center gap-3">
+              {user?.full_name && (
+                <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-semibold text-sm">
+                  {(() => {
+                    const parts = user.full_name.trim().split(/\s+/)
+                    const first = parts[0]?.charAt(0) ?? ''
+                    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : ''
+                    return (first + last).toUpperCase()
+                  })()}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="font-semibold text-gray-900">{user?.full_name}</span>
+                {user?.role === 'student' && (
+                  <a href="/profile" className="text-xs text-orange-600 mt-0.5">Complete your profile →</a>
+                )}
               </div>
-              <span className="font-semibold text-gray-900">{user?.full_name}</span>
             </div>
             <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${getRoleBadgeColor(user?.role)}`}>
               {roleLabel}

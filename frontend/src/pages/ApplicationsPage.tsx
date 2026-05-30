@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { deleteApplication, getApplications, getJobApplicants } from '../api/applications'
+import { deleteApplication, getApplications, getJobApplicants, updateApplicationStatus } from '../api/applications'
 import { getJobs } from '../api/jobs'
 import type { ApplicationItem, ApplicantItem, JobCard } from '../types/api'
 
@@ -163,7 +163,64 @@ export default function ApplicationsPage() {
                             <p className="font-semibold text-slate-900">{applicant.student.full_name}</p>
                             <p className="text-sm text-slate-500">{applicant.student.email}</p>
                           </div>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">{applicant.status_display}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">{applicant.status_display}</span>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const prev = applicants
+                                  setApplicants((cur) => cur.map((a) => a.id === applicant.id ? { ...a, status: 'shortlisted', status_display: 'Shortlisted' } : a))
+                                  try {
+                                    await updateApplicationStatus(applicant.id, 'shortlisted')
+                                  } catch (err) {
+                                    setApplicants(prev)
+                                    setError(err instanceof Error ? err.message : 'Unable to update status')
+                                  }
+                                }}
+                                disabled={applicant.status === 'accepted' || applicant.status === 'rejected'}
+                                className="px-3 py-1 rounded-lg border border-blue-300 text-blue-700 text-sm disabled:opacity-50"
+                              >
+                                Shortlist
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const prev = applicants
+                                  setApplicants((cur) => cur.map((a) => a.id === applicant.id ? { ...a, status: 'accepted', status_display: 'Accepted' } : a))
+                                  try {
+                                    await updateApplicationStatus(applicant.id, 'accepted')
+                                  } catch (err) {
+                                    setApplicants(prev)
+                                    setError(err instanceof Error ? err.message : 'Unable to update status')
+                                  }
+                                }}
+                                disabled={applicant.status === 'accepted' || applicant.status === 'rejected'}
+                                className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-sm disabled:opacity-50"
+                              >
+                                Accept
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const prev = applicants
+                                  setApplicants((cur) => cur.map((a) => a.id === applicant.id ? { ...a, status: 'rejected', status_display: 'Rejected' } : a))
+                                  try {
+                                    await updateApplicationStatus(applicant.id, 'rejected')
+                                  } catch (err) {
+                                    setApplicants(prev)
+                                    setError(err instanceof Error ? err.message : 'Unable to update status')
+                                  }
+                                }}
+                                disabled={applicant.status === 'accepted' || applicant.status === 'rejected'}
+                                className="px-3 py-1 rounded-lg border border-red-300 text-red-700 text-sm disabled:opacity-50"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </div>
                         </div>
                         <p className="mt-3 text-sm text-slate-600">Cover note: {applicant.cover_letter || 'Not provided.'}</p>
                       </div>

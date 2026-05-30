@@ -51,7 +51,54 @@ export default function Sidebar() {
               }`
             }
           >
-            <span className="text-lg">{item.icon}</span>
+            <span className="text-lg">
+              {(() => {
+                switch (item.label) {
+                  case 'Dashboard':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20V10M12 20V6M18 20V14" />
+                      </svg>
+                    )
+                  case 'Internships':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                    )
+                  case 'Applications':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6M9 16h6M7 7h10v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V7z" />
+                      </svg>
+                    )
+                  case 'Companies':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21V7a2 2 0 0 1 2-2h14v16H3z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21V10h10v11" />
+                      </svg>
+                    )
+                  case 'Profile':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 20a6 6 0 0 1 12 0" />
+                      </svg>
+                    )
+                  case 'Students':
+                    return (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4-8 4-8-4 8-4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6" />
+                      </svg>
+                    )
+                  default:
+                    return null
+                }
+              })()}
+            </span>
             {item.label}
           </NavLink>
         ))}

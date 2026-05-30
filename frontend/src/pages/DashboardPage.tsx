@@ -5,7 +5,7 @@ import { getApplications } from '../api/applications'
 import { getCompanies, getOwnCompanyProfile } from '../api/companies'
 import { createJob, getJobs } from '../api/jobs'
 import { getRecommendations } from '../api/recommendations'
-import { getStudentProfile, getStudents, updateStudentProfile } from '../api/students'
+import { getStudentProfile, getStudents } from '../api/students'
 import type {
   ApplicationItem,
   CompanyListItem,
@@ -23,22 +23,6 @@ function formatDate(value: string | undefined) {
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(value))
 }
 
-const initialStudentForm: StudentProfilePayload = {
-  bio: '',
-  phone: '',
-  location: '',
-  university: '',
-  degree: '',
-  field_of_study: '',
-  graduation_year: null,
-  gpa: null,
-  linkedin_url: '',
-  github_url: '',
-  portfolio_url: '',
-  available_from: null,
-  is_available: true,
-  skill_ids: [],
-}
 
 const initialJobForm: JobFormPayload = {
   title: '',
@@ -89,9 +73,7 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([])
   const [students, setStudents] = useState<StudentListItem[]>([])
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
-  const [studentForm, setStudentForm] = useState<StudentProfilePayload>(initialStudentForm)
-  const [studentSaving, setStudentSaving] = useState(false)
-  const [studentMessage, setStudentMessage] = useState<string | null>(null)
+  
   const [jobForm, setJobForm] = useState<JobFormPayload>(initialJobForm)
   const [jobSaving, setJobSaving] = useState(false)
   const [jobMessage, setJobMessage] = useState<string | null>(null)
@@ -140,22 +122,7 @@ export default function DashboardPage() {
           setProfile(profileData)
           setApplications(applicationsData)
           setRecommendations(recommendationData.results)
-          setStudentForm({
-            bio: profileData.bio ?? '',
-            phone: profileData.phone ?? '',
-            location: profileData.location ?? '',
-            university: profileData.university ?? '',
-            degree: profileData.degree ?? '',
-            field_of_study: profileData.field_of_study ?? '',
-            graduation_year: profileData.graduation_year ?? null,
-            gpa: profileData.gpa ?? null,
-            linkedin_url: profileData.linkedin_url ?? '',
-            github_url: profileData.github_url ?? '',
-            portfolio_url: profileData.portfolio_url ?? '',
-            available_from: profileData.available_from ?? null,
-            is_available: profileData.is_available,
-            skill_ids: profileData.skills.map((skill) => skill.id),
-          })
+          // student form is handled on the Profile page; only set profile and related data here
         }
 
         if (currentUser.role === 'company') {
@@ -195,21 +162,7 @@ export default function DashboardPage() {
     )
   }
 
-  async function handleStudentSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setStudentMessage(null)
-    setStudentSaving(true)
-
-    try {
-      const updated = await updateStudentProfile(studentForm)
-      setProfile(updated)
-      setStudentMessage('Profile updated successfully.')
-    } catch (err) {
-      setStudentMessage(err instanceof Error ? err.message : 'Unable to save profile.')
-    } finally {
-      setStudentSaving(false)
-    }
-  }
+  
 
   async function handleJobSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -286,93 +239,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="card">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Quick Profile Update</h2>
-                  <p className="text-gray-600 mt-1">Keep your information fresh and discoverable</p>
-                </div>
-                <span className="badge badge-primary">Student</span>
-              </div>
-              {studentMessage && (
-                <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                  ✓ {studentMessage}
-                </div>
-              )}
-              <form onSubmit={handleStudentSubmit} className="space-y-5">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Bio</label>
-                    <textarea
-                      value={studentForm.bio ?? ''}
-                      onChange={(event) => setStudentForm((current) => ({ ...current, bio: event.target.value }))}
-                      className="input-field h-24"
-                      placeholder="Tell companies about yourself..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Quick Links</label>
-                    <div className="space-y-3">
-                      <input
-                        value={studentForm.linkedin_url ?? ''}
-                        onChange={(event) => setStudentForm((current) => ({ ...current, linkedin_url: event.target.value }))}
-                        className="input-field"
-                        placeholder="LinkedIn URL"
-                      />
-                      <input
-                        value={studentForm.github_url ?? ''}
-                        onChange={(event) => setStudentForm((current) => ({ ...current, github_url: event.target.value }))}
-                        className="input-field"
-                        placeholder="GitHub URL"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-3">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">University</label>
-                    <input
-                      value={studentForm.university ?? ''}
-                      onChange={(event) => setStudentForm((current) => ({ ...current, university: event.target.value }))}
-                      className="input-field"
-                      placeholder="University name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Field of Study</label>
-                    <input
-                      value={studentForm.field_of_study ?? ''}
-                      onChange={(event) => setStudentForm((current) => ({ ...current, field_of_study: event.target.value }))}
-                      className="input-field"
-                      placeholder="e.g. Computer Science"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Availability</label>
-                    <label className="flex items-center gap-3 p-2.5 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <input
-                        type="checkbox"
-                        checked={studentForm.is_available ?? true}
-                        onChange={(event) => setStudentForm((current) => ({ ...current, is_available: event.target.checked }))}
-                        className="w-4 h-4 rounded"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Available now</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-2">
-                  <button
-                    type="submit"
-                    disabled={studentSaving}
-                    className="btn btn-primary"
-                  >
-                    {studentSaving ? 'Saving…' : 'Update Profile'}
-                  </button>
-                </div>
-              </form>
-            </div>
+            {/* Profile quick-update removed - profile is handled on the Profile page */}
 
             <div className="grid gap-6 xl:grid-cols-2">
               <div className="card">
@@ -398,7 +265,7 @@ export default function DashboardPage() {
                             <p className="text-xs text-gray-500 mt-1">{recommendation.job.location || 'Remote'}</p>
                           </div>
                           <span className="bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent font-bold text-lg">
-                            {Math.round(recommendation.score * 100)}%
+                            {Math.round(recommendation.score)}%
                           </span>
                         </div>
                         <div className="flex flex-wrap gap-1">
@@ -409,6 +276,9 @@ export default function DashboardPage() {
                             <span className="text-xs text-gray-500">+{recommendation.matched_skills.length - 3} more</span>
                           )}
                         </div>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Missing: {recommendation.missing_skills.join(', ') || 'None'}
+                        </p>
                       </div>
                     ))}
                   </div>

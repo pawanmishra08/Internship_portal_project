@@ -1,18 +1,22 @@
 import type { ApplicationItem, ApplicantItem } from '../types/api'
-import { apiDelete, apiGet, apiPatch } from './client'
+import { apiDelete, apiGet, apiPatch, apiPost } from './client'
 
-export function getApplications() {
-  return apiGet<ApplicationItem[]>('/applications/')
+export function getApplications(params?: Record<string, string>) {
+  return apiGet<ApplicationItem[]>('/applications/', params)
+}
+
+export async function createApplication(payload: { job: number; cover_letter: string }) {
+  return apiPost<ApplicationItem>('/applications/', payload)
 }
 
 export function deleteApplication(id: number) {
-  return apiDelete<void>(`/applications/${id}/`)
+  return apiDelete<{ message: string }>(`/applications/${id}/`)
 }
 
-export function getJobApplicants(jobId: number) {
-  return apiGet<ApplicantItem[]>(`/applications/job/${jobId}/applicants/`)
+export function getJobApplicants(jobId: number, params?: Record<string, string>) {
+  return apiGet<ApplicantItem[]>(`/applications/job/${jobId}/applicants/`, params)
 }
 
-export function updateApplicationStatus(id: number, body: { status: string }) {
-  return apiPatch<ApplicationItem>(`/applications/${id}/status/`, body)
+export async function updateApplicationStatus(id: number, status: string) {
+  return apiPatch<ApplicantItem>(`/applications/${id}/status/`, { status })
 }

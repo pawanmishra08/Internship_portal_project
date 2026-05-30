@@ -1,5 +1,5 @@
-import type { CompanyListItem, CompanyProfile } from '../types/api'
-import { apiGet } from './client'
+import type { CompanyListItem, CompanyProfile, JobCard } from '../types/api'
+import { apiGet, apiPatch, apiPost } from './client'
 
 export function getCompanies(params?: Record<string, string | number | boolean>) {
   return apiGet<CompanyListItem[]>('/companies/', params)
@@ -11,4 +11,21 @@ export function getCompany(id: number) {
 
 export function getOwnCompanyProfile() {
   return apiGet<CompanyProfile>('/companies/profile/')
+}
+
+export function updateCompanyProfile(payload: Partial<{
+  company_name: string
+  tagline: string
+  description: string
+  industry: string
+  size: string
+  website: string
+  location: string
+  linkedin_url: string
+}>) {
+  return apiPatch<CompanyProfile>('/companies/profile/', payload)
+}
+
+export function getCompanyJobs(companyId: number) {
+  return apiGet<JobCard[]>(`/companies/${companyId}/jobs/`)
 }
