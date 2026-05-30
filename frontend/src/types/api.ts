@@ -24,6 +24,24 @@ export type Skill = {
   category?: string
 }
 
+export type EducationPreference = {
+  id: string
+  level: 'bachelor' | 'master'
+  institution: string
+  field_of_study: string
+  graduation_year: number | null
+  gpa: number | null
+}
+
+export type ProjectEntry = {
+  id: string
+  title: string
+  description: string
+  technologies: string
+  link: string
+  year: string
+}
+
 export type JobFormPayload = {
   title: string
   description: string
@@ -47,8 +65,13 @@ export type StudentProfilePayload = {
   university?: string
   degree?: string
   field_of_study?: string
+  target_role?: string
+  preferred_work_mode?: string
   graduation_year?: number | null
   gpa?: number | null
+  resume?: File | null
+  degree_preferences?: EducationPreference[]
+  projects?: ProjectEntry[]
   linkedin_url?: string
   github_url?: string
   portfolio_url?: string
@@ -99,20 +122,13 @@ export type ApplicantItem = {
   status: string
   status_display: string
   cover_letter?: string
+  match_score?: number
+  download_url?: string
   resume_url?: string | null
   company_notes?: string
   applied_at: string
   updated_at: string
-  student: {
-    id: number
-    full_name: string
-    email: string
-    university?: string
-    degree?: string
-    location?: string
-    is_available?: boolean
-    skill_count?: number
-  }
+  student: StudentProfile
 }
 
 export type StudentListItem = {
@@ -137,9 +153,13 @@ export type StudentProfile = {
   university?: string
   degree?: string
   field_of_study?: string
+  target_role?: string
+  preferred_work_mode?: string
   graduation_year?: number | null
   gpa?: number | null
   resume_url?: string | null
+  degree_preferences: EducationPreference[]
+  projects: ProjectEntry[]
   linkedin_url?: string
   github_url?: string
   portfolio_url?: string

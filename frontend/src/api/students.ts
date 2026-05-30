@@ -1,11 +1,11 @@
 import type { StudentListItem, StudentProfile, StudentProfilePayload } from '../types/api'
-import { apiDelete, apiGet, apiPatch } from './client'
+import { apiGet, apiPatch } from './client'
 
 export function getStudentProfile() {
   return apiGet<StudentProfile>('/students/profile/')
 }
 
-export function updateStudentProfile(payload: StudentProfilePayload) {
+export function updateStudentProfile(payload: StudentProfilePayload | FormData) {
   return apiPatch<StudentProfile>('/students/profile/', payload)
 }
 

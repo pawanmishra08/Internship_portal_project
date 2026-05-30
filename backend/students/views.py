@@ -90,3 +90,28 @@ class AdminStudentListView(generics.ListAPIView):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['user__full_name', 'user__email', 'university']
     filterset_fields = ['is_available', 'degree']
+
+
+class AdminSkillListCreateView(generics.ListCreateAPIView):
+    """
+    GET  /api/students/skills/admin/    → list all skills (admin only)
+    POST /api/students/skills/admin/    → create a new skill (admin only)
+    """
+    queryset = Skill.objects.all().order_by('category', 'name')
+    serializer_class = SkillSerializer
+    permission_classes = [IsAdmin]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['name']
+    filterset_fields = ['category']
+
+
+class AdminSkillDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET    /api/students/skills/admin/<pk>/   → retrieve
+    PATCH  /api/students/skills/admin/<pk>/   → partial update
+    PUT    /api/students/skills/admin/<pk>/   → full update
+    DELETE /api/students/skills/admin/<pk>/   → delete
+    """
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    permission_classes = [IsAdmin]

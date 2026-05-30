@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApplications } from '../api/applications'
-import { getCompanies, getOwnCompanyProfile } from '../api/companies'
+import { getCompanies, getOwnCompanyProfile, updateCompanyVerification } from '../api/companies'
 import { createJob, getJobs } from '../api/jobs'
 import { getRecommendations } from '../api/recommendations'
 import { getStudentProfile, getStudents } from '../api/students'
@@ -15,14 +15,12 @@ import type {
   RecommendationItem,
   StudentListItem,
   StudentProfile,
-  StudentProfilePayload,
 } from '../types/api'
 
 function formatDate(value: string | undefined) {
   if (!value) return 'Unknown'
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(value))
 }
-
 
 const initialJobForm: JobFormPayload = {
   title: '',
@@ -43,23 +41,145 @@ const initialJobForm: JobFormPayload = {
 function profileScore(profile: StudentProfile | null) {
   if (!profile) return 0
   const fields = [
-    profile.bio,
-    profile.phone,
-    profile.location,
-    profile.university,
-    profile.degree,
-    profile.field_of_study,
-    profile.graduation_year,
-    profile.gpa,
-    profile.resume_url,
-    profile.linkedin_url,
-    profile.github_url,
-    profile.portfolio_url,
+    profile.bio, profile.phone, profile.location, profile.university,
+    profile.degree, profile.field_of_study, profile.graduation_year, profile.gpa,
+    profile.resume_url, profile.degree_preferences?.length, profile.projects?.length,
+    profile.linkedin_url, profile.github_url, profile.portfolio_url,
   ]
-  const filled = fields.filter(Boolean).length
-  return Math.round((filled / fields.length) * 100)
+  return Math.round((fields.filter(Boolean).length / fields.length) * 100)
 }
 
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const C = {
+  ink: '#18181b',
+  inkMid: '#52525b',
+  inkSoft: '#a1a1aa',
+  surface: '#ffffff',
+  surfaceAlt: '#f4f4f5',
+  border: '#e4e4e7',
+  success: '#16a34a',
+  successBg: '#f0fdf4',
+  successBorder: '#bbf7d0',
+  error: '#dc2626',
+  errorBg: '#fef2f2',
+  errorBorder: '#fecaca',
+  amber: '#d97706',
+  amberBg: '#fffbeb',
+}
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@300;400;500;600&display=swap');
+
+  .dp-root { font-family: 'Instrument Sans', sans-serif; background: #f4f4f5; min-height: 100vh; }
+  .dp-serif { font-family: 'Playfair Display', Georgia, serif; }
+
+  .dp-field {
+    width: 100%; padding: 10px 14px; font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px; background: #ffffff; border: 1px solid #e4e4e7;
+    border-radius: 8px; color: #18181b; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s; appearance: none;
+  }
+  .dp-field:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
+  .dp-field::placeholder { color: #a1a1aa; }
+
+  .dp-card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; overflow: hidden; }
+  .dp-card-inner { padding: 24px 28px; }
+
+  .dp-kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #a1a1aa; }
+  .dp-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #a1a1aa; margin-bottom: 6px; }
+
+  .dp-btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 20px; background: #18181b; color: #ffffff;
+    font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.04em; border: none; border-radius: 8px; cursor: pointer;
+    transition: opacity 0.15s; white-space: nowrap;
+  }
+  .dp-btn-primary:hover { opacity: 0.82; }
+  .dp-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .dp-btn-ghost {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 18px; background: transparent; color: #18181b;
+    font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 500;
+    border: 1px solid #e4e4e7; border-radius: 8px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .dp-btn-ghost:hover { border-color: #18181b; background: #f4f4f5; }
+
+  .dp-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+  .dp-badge-neutral { background: #f4f4f5; color: #52525b; }
+  .dp-badge-green   { background: #f0fdf4; color: #16a34a; }
+  .dp-badge-amber   { background: #fffbeb; color: #d97706; }
+  .dp-badge-red     { background: #fef2f2; color: #dc2626; }
+  .dp-badge-blue    { background: #eff6ff; color: #2563eb; }
+
+  .dp-stat-box { background: #f4f4f5; border-radius: 10px; padding: 16px 18px; }
+
+  .dp-row {
+    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
+    padding: 18px 22px; transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .dp-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
+
+  .dp-divider { height: 1px; background: #e4e4e7; }
+
+  .dp-filter-btn {
+    padding: 8px 16px; font-family: 'Instrument Sans', sans-serif; font-size: 13px;
+    font-weight: 500; border-radius: 8px; border: 1px solid #e4e4e7;
+    cursor: pointer; transition: all 0.15s; background: transparent; color: #52525b;
+  }
+  .dp-filter-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
+  .dp-filter-btn:not(.active):hover { border-color: #18181b; color: #18181b; }
+
+  .dp-progress-track { height: 6px; background: #e4e4e7; border-radius: 999px; overflow: hidden; }
+  .dp-progress-fill  { height: 100%; background: #18181b; border-radius: 999px; transition: width 0.6s ease; }
+
+  .dp-nav-link {
+    display: block; padding: 10px 14px; border-radius: 8px; font-size: 13px;
+    font-weight: 500; color: #52525b; text-decoration: none;
+    transition: background 0.12s, color 0.12s;
+  }
+  .dp-nav-link:hover { background: #f4f4f5; color: #18181b; }
+
+  .dp-project-card {
+    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
+    padding: 20px; transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .dp-project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
+
+  .dp-score-ring {
+    width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600;
+    color: #18181b; background: #f4f4f5; border: 2px solid #18181b; flex-shrink: 0;
+  }
+
+  .dp-header-band { background: #18181b; color: #fff; padding: 40px 48px 36px; }
+`
+
+function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="dp-label">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
+  return (
+    <div className="dp-card">
+      <div className="dp-card-inner">
+        <p className="dp-kicker" style={{ marginBottom: 10 }}>{label}</p>
+        <p className="dp-serif" style={{ fontSize: 32, fontWeight: 400, color: C.ink, lineHeight: 1 }}>{value}</p>
+        {sub && <p style={{ marginTop: 8, fontSize: 12, color: C.inkSoft }}>{sub}</p>}
+      </div>
+    </div>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { status, user } = useAuth()
@@ -73,76 +193,55 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([])
   const [students, setStudents] = useState<StudentListItem[]>([])
   const [companies, setCompanies] = useState<CompanyListItem[]>([])
-  
+  const [companySavingId, setCompanySavingId] = useState<number | null>(null)
+
   const [jobForm, setJobForm] = useState<JobFormPayload>(initialJobForm)
   const [jobSaving, setJobSaving] = useState(false)
   const [jobMessage, setJobMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [adminQuery, setAdminQuery] = useState('')
   const [adminFilter, setAdminFilter] = useState<'students' | 'companies'>('students')
 
   const filteredStudents = useMemo(
-    () => students.filter((student) =>
-      student.full_name.toLowerCase().includes(adminQuery.toLowerCase()) ||
-      student.email.toLowerCase().includes(adminQuery.toLowerCase())
-    ),
-    [students, adminQuery]
+    () => students.filter((s) =>
+      s.full_name.toLowerCase().includes(adminQuery.toLowerCase()) ||
+      s.email.toLowerCase().includes(adminQuery.toLowerCase())
+    ), [students, adminQuery]
   )
 
   const filteredCompanies = useMemo(
-    () => companies.filter((company) =>
-      company.company_name.toLowerCase().includes(adminQuery.toLowerCase()) ||
-      (company.industry ?? '').toLowerCase().includes(adminQuery.toLowerCase())
-    ),
-    [companies, adminQuery]
+    () => companies.filter((c) =>
+      c.company_name.toLowerCase().includes(adminQuery.toLowerCase()) ||
+      (c.industry ?? '').toLowerCase().includes(adminQuery.toLowerCase())
+    ), [companies, adminQuery]
   )
 
+  const studentCompletion = profileScore(profile)
+
   useEffect(() => {
-    if (status === 'anonymous') {
-      navigate('/auth', { replace: true })
-      return
-    }
-
-    if (status !== 'authenticated' || !user) {
-      return
-    }
-
+    if (status === 'anonymous') { navigate('/auth', { replace: true }); return }
+    if (status !== 'authenticated' || !user) return
     const currentUser = user
 
     async function loadDashboard() {
-      setError(null)
-      setLoading(true)
-
+      setError(null); setLoading(true)
       try {
         if (currentUser.role === 'student') {
           const [profileData, applicationsData, recommendationData] = await Promise.all([
-            getStudentProfile(),
-            getApplications(),
-            getRecommendations(3),
+            getStudentProfile(), getApplications(), getRecommendations(3),
           ])
-          setProfile(profileData)
-          setApplications(applicationsData)
+          setProfile(profileData); setApplications(applicationsData)
           setRecommendations(recommendationData.results)
-          // student form is handled on the Profile page; only set profile and related data here
         }
-
         if (currentUser.role === 'company') {
-          const [companyData, jobsData] = await Promise.all([
-            getOwnCompanyProfile(),
-            getJobs(),
-          ])
-          setCompanyProfile(companyData)
-          setJobs(jobsData)
+          const [companyData, jobsData] = await Promise.all([getOwnCompanyProfile(), getJobs()])
+          setCompanyProfile(companyData); setJobs(jobsData)
         }
-
         if (currentUser.role === 'admin') {
           const [studentData, companyData, jobsData] = await Promise.all([
-            getStudents({ is_available: true }),
-            getCompanies(),
-            getJobs({ status: 'active' }),
+            getStudents({ is_available: true }), getCompanies(), getJobs({ status: 'active' }),
           ])
-          setStudents(studentData)
-          setCompanies(companyData)
-          setJobs(jobsData)
+          setStudents(studentData); setCompanies(companyData); setJobs(jobsData)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load dashboard')
@@ -150,28 +249,14 @@ export default function DashboardPage() {
         setLoading(false)
       }
     }
-
     void loadDashboard()
   }, [status, user, navigate])
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center text-slate-500">Preparing your workspace…</div>
-      </div>
-    )
-  }
-
-  
-
   async function handleJobSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setJobMessage(null)
-    setJobSaving(true)
-
+    event.preventDefault(); setJobMessage(null); setJobSaving(true)
     try {
-      const createdJob = await createJob(jobForm)
-      setJobs((current) => [createdJob, ...current])
+      const created = await createJob(jobForm)
+      setJobs((cur) => [created, ...cur])
       setJobForm(initialJobForm)
       setJobMessage('Job published successfully.')
     } catch (err) {
@@ -181,402 +266,484 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleToggleCompanyVerification(companyId: number, nextVerified: boolean) {
+    setError(null)
+    setSuccessMessage(null)
+    setCompanySavingId(companyId)
+
+    try {
+      const updatedCompany = await updateCompanyVerification(companyId, { is_verified: nextVerified })
+      setCompanies((current) => current.map((company) => (company.id === updatedCompany.id ? updatedCompany : company)))
+      setSuccessMessage(nextVerified ? 'Company verified successfully.' : 'Company verification removed.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update company verification')
+    } finally {
+      setCompanySavingId(null)
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="dp-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <p style={{ color: C.inkSoft, fontSize: 14 }}>Preparing your workspace…</p>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-slate-300 border-t-slate-900 rounded-full mx-auto mb-4" />
-          <p className="text-slate-600">Loading your dashboard…</p>
+      <div className="dp-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 40, height: 40, border: `2px solid ${C.border}`, borderTopColor: C.ink, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: C.inkSoft, fontSize: 14 }}>Loading your dashboard…</p>
         </div>
       </div>
     )
   }
 
+  const roleLabel = user.role.charAt(0).toUpperCase() + user.role.slice(1)
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-12">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wider text-indigo-600">Welcome back</p>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3">{user.full_name}</h1>
-              <p className="max-w-2xl text-gray-600 mt-3">
-                You are signed in as a <span className="font-semibold text-indigo-600">{user.role}</span>. Your dashboard is tailored to your role.
-              </p>
-            </div>
-            <div className="card">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Member since</p>
-              <p className="mt-3 text-2xl font-bold text-gray-900">{formatDate(user.date_joined)}</p>
+    <>
+      <style>{styles}</style>
+      <div className="dp-root">
+
+        {/* ── Header band ── */}
+        <div className="dp-header-band">
+          <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
+              <div>
+                <p className="dp-kicker" style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Welcome back</p>
+                <h1 className="dp-serif" style={{ fontSize: 36, fontWeight: 400, color: '#fff', margin: 0, lineHeight: 1.15 }}>{user.full_name}</h1>
+                <p style={{ marginTop: 10, fontSize: 14, color: 'rgba(255,255,255,0.5)', fontWeight: 300 }}>
+                  Signed in as <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>{roleLabel}</span>
+                  {' '}— your dashboard is tailored to your role.
+                </p>
+              </div>
+              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: 24 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Member since</p>
+                <p className="dp-serif" style={{ fontSize: 22, color: '#fff', fontWeight: 400 }}>{formatDate(user.date_joined)}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {error && (
-          <div className="mb-8 bg-red-50 border border-red-200 text-red-700 px-4 py-4 rounded-lg">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
+        {/* ── Body ── */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 32px 64px' }}>
 
-        {user.role === 'student' && (
-          <section className="space-y-8">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Profile completeness</p>
-                <p className="mt-3 text-4xl font-bold text-indigo-600">{profileScore(profile)}%</p>
-                <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-indigo-400 to-indigo-600 h-2 rounded-full" style={{width: `${profileScore(profile)}%`}} />
-                </div>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Recommended jobs</p>
-                <p className="mt-3 text-4xl font-bold text-emerald-600">{recommendations.length}</p>
-                <p className="text-xs text-gray-500 mt-2">Based on your skills</p>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Applications</p>
-                <p className="mt-3 text-4xl font-bold text-blue-600">{applications.length}</p>
-                <p className="text-xs text-gray-500 mt-2">Total submitted</p>
-              </div>
+          {successMessage && (
+            <div style={{ background: C.successBg, border: `1px solid ${C.successBorder}`, borderRadius: 10, padding: '12px 18px', color: C.success, fontSize: 14, marginBottom: 24 }}>
+              {successMessage}
             </div>
+          )}
 
-            {/* Profile quick-update removed - profile is handled on the Profile page */}
+          {error && (
+            <div style={{ background: C.errorBg, border: `1px solid ${C.errorBorder}`, borderRadius: 10, padding: '12px 18px', color: C.error, fontSize: 14, marginBottom: 24 }}>
+              <strong>Error:</strong> {error}
+            </div>
+          )}
 
-            <div className="grid gap-6 xl:grid-cols-2">
-              <div className="card">
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Recommended opportunities</h2>
-                    <p className="text-gray-600 mt-1">Based on your skills and profile</p>
+          {/* ══ STUDENT VIEW ══ */}
+          {user.role === 'student' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+              {/* Quick nav */}
+              <div className="dp-card">
+                <div className="dp-card-inner">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 4 }}>Navigation</p>
+                      <p className="dp-serif" style={{ fontSize: 20, fontWeight: 400, color: C.ink }}>Jump to a section</p>
+                    </div>
+                    <span className="dp-badge dp-badge-neutral">Student flow</span>
                   </div>
-                  <span className="badge badge-primary">Top picks</span>
-                </div>
-                {recommendations.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">Complete your profile and add skills to see recommendations.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {recommendations.map((recommendation) => (
-                      <div key={recommendation.job.id} className="card group hover:shadow-lg transition-shadow">
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div className="flex-1">
-                            <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition">{recommendation.job.title}</h3>
-                            <p className="text-sm text-gray-600 mt-1">{recommendation.job.company_name}</p>
-                            <p className="text-xs text-gray-500 mt-1">{recommendation.job.location || 'Remote'}</p>
-                          </div>
-                          <span className="bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent font-bold text-lg">
-                            {Math.round(recommendation.score)}%
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {recommendation.matched_skills.slice(0, 3).map((skill) => (
-                            <span key={skill} className="badge badge-primary text-xs">{skill}</span>
-                          ))}
-                          {recommendation.matched_skills.length > 3 && (
-                            <span className="text-xs text-gray-500">+{recommendation.matched_skills.length - 3} more</span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Missing: {recommendation.missing_skills.join(', ') || 'None'}
-                        </p>
-                      </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {[
+                      ['#profile-completion', 'Profile'],
+                      ['#project-highlights', 'Projects'],
+                      ['#recommended-opportunities', 'Recommendations'],
+                      ['#recent-applications', 'Applications'],
+                    ].map(([href, label]) => (
+                      <a key={href} href={href} className="dp-nav-link" style={{ border: `1px solid ${C.border}` }}>{label}</a>
                     ))}
+                    <a href="/profile#profile-basics" className="dp-nav-link" style={{ border: `1px solid ${C.border}` }}>Edit profile →</a>
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="card">
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Recent applications</h2>
-                    <p className="text-gray-600 mt-1">Your latest submissions</p>
-                  </div>
-                  <span className="badge badge-primary">Latest</span>
-                </div>
-                {applications.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">You haven't applied to any roles yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {applications.slice(0, 5).map((item) => (
-                      <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:bg-indigo-50 transition">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="font-semibold text-gray-900">{item.job.title}</p>
-                            <p className="text-sm text-gray-600 mt-1">{item.job.company_name} · {formatDate(item.applied_at)}</p>
-                          </div>
-                          <span className={`badge text-xs ${
-                            item.status === 'accepted' ? 'badge-success' :
-                            item.status === 'rejected' ? 'badge-error' :
-                            'badge-warning'
-                          }`}>
-                            {item.status_display}
-                          </span>
-                        </div>
+              {/* Stat row */}
+              <div id="profile-completion" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+                <StatCard label="Profile complete" value={`${studentCompletion}%`} sub="Based on filled fields" />
+                <StatCard label="Recommended" value={recommendations.length} sub="Matched to your skills" />
+                <StatCard label="Applications" value={applications.length} sub="Total submitted" />
+                <StatCard label="Projects" value={profile?.projects?.length ?? 0} sub="Shared on profile" />
+                {/* Progress card */}
+                <div className="dp-card" style={{ gridColumn: 'span 2' }}>
+                  <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 4 }}>Finish your profile</p>
+                      <p style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.6 }}>
+                        Add projects, education, resume, and a few more details so companies can review you faster.
+                      </p>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ fontSize: 12, color: C.inkSoft }}>Completion</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{studentCompletion}%</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {user.role === 'company' && (
-          <section className="space-y-8">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Company Status</p>
-                <p className="mt-3 text-2xl font-bold text-gray-900">
-                  <span className={`badge ${companyProfile?.is_verified ? 'badge-success' : 'badge-warning'}`}>
-                    {companyProfile?.is_verified ? '✓ Verified' : 'Pending'}
-                  </span>
-                </p>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Open Roles</p>
-                <p className="mt-3 text-4xl font-bold text-blue-600">{jobs.filter((job) => job.status === 'active').length}</p>
-                <p className="text-xs text-gray-500 mt-2">Currently active</p>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Total Positions</p>
-                <p className="mt-3 text-4xl font-bold text-purple-600">{jobs.length}</p>
-                <p className="text-xs text-gray-500 mt-2">All time</p>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">{companyProfile?.company_name || 'Company'}</h2>
-                <p className="text-gray-600 mt-1">{companyProfile?.industry || 'Industry not specified'}</p>
-              </div>
-              <p className="text-gray-700 leading-relaxed">{companyProfile?.description || 'No company description available yet. Update your profile to tell students about your company.'}</p>
-            </div>
-
-            <div className="card">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Publish a New Role</h2>
-                  <p className="text-gray-600 mt-1">Create an internship or job posting</p>
-                </div>
-                <span className="badge badge-primary">Post</span>
-              </div>
-              {jobMessage && (
-                <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                  ✓ {jobMessage}
-                </div>
-              )}
-              <form onSubmit={handleJobSubmit} className="space-y-5">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Role Title</label>
-                    <input
-                      value={jobForm.title}
-                      onChange={(event) => setJobForm((current) => ({ ...current, title: event.target.value }))}
-                      className="input-field"
-                      placeholder="e.g. Frontend Engineer Intern"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Location</label>
-                    <input
-                      value={jobForm.location ?? ''}
-                      onChange={(event) => setJobForm((current) => ({ ...current, location: event.target.value }))}
-                      className="input-field"
-                      placeholder="e.g. San Francisco, CA"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-2">Description</label>
-                  <textarea
-                    value={jobForm.description}
-                    onChange={(event) => setJobForm((current) => ({ ...current, description: event.target.value }))}
-                    className="input-field h-24"
-                    placeholder="Tell candidates about this role..."
-                    required
-                  />
-                </div>
-
-                <div className="grid gap-5 md:grid-cols-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Type</label>
-                    <select
-                      value={jobForm.type}
-                      onChange={(event) => setJobForm((current) => ({ ...current, type: event.target.value }))}
-                      className="input-field"
-                    >
-                      <option value="full_time">Full Time</option>
-                      <option value="part_time">Part Time</option>
-                      <option value="internship">Internship</option>
-                      <option value="contract">Contract</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Openings</label>
-                    <input
-                      type="number"
-                      min={1}
-                      value={jobForm.openings ?? 1}
-                      onChange={(event) => setJobForm((current) => ({ ...current, openings: Number(event.target.value) }))}
-                      className="input-field"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-900 mb-2">Deadline</label>
-                    <input
-                      type="date"
-                      value={jobForm.deadline ?? ''}
-                      onChange={(event) => setJobForm((current) => ({ ...current, deadline: event.target.value || null }))}
-                      className="input-field"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      type="submit"
-                      disabled={jobSaving}
-                      className="btn btn-primary w-full"
-                    >
-                      {jobSaving ? 'Publishing…' : 'Publish'}
+                      <div className="dp-progress-track">
+                        <div className="dp-progress-fill" style={{ width: `${studentCompletion}%` }} />
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => navigate('/profile')} className="dp-btn-ghost" style={{ alignSelf: 'flex-start' }}>
+                      Complete profile →
                     </button>
                   </div>
                 </div>
-              </form>
-            </div>
+              </div>
 
-            <div className="card">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Job Postings</h3>
-              {jobs.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">No job postings yet. Create your first role above!</p>
-              ) : (
-                <div className="space-y-3">
-                  {jobs.slice(0, 5).map((job) => (
-                    <div key={job.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-semibold text-gray-900">{job.title}</p>
-                          <p className="text-sm text-gray-600 mt-1">{job.location || 'Remote'} · {job.type}</p>
+              {/* Projects */}
+              <div id="project-highlights" className="dp-card">
+                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p className="dp-kicker" style={{ marginBottom: 4 }}>Portfolio</p>
+                    <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Project highlights</h2>
+                  </div>
+                  <span className="dp-badge dp-badge-neutral">{profile?.projects?.length ?? 0} saved</span>
+                </div>
+                <div className="dp-card-inner">
+                  {profile?.projects?.length ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+                      {profile.projects.slice(0, 3).map((project) => (
+                        <div key={project.id} className="dp-project-card">
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                            <div>
+                              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: C.inkSoft, marginBottom: 6 }}>{project.year || 'Project'}</p>
+                              <h3 style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{project.title}</h3>
+                            </div>
+                            <span className="dp-badge dp-badge-neutral">Saved</span>
+                          </div>
+                          <p style={{ marginTop: 10, fontSize: 13, color: C.inkMid, lineHeight: 1.65, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {project.description || 'No description added yet.'}
+                          </p>
+                          <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {project.technologies && (
+                              <span style={{ fontSize: 12, background: C.surfaceAlt, color: C.inkMid, borderRadius: 6, padding: '3px 10px' }}>{project.technologies}</span>
+                            )}
+                            {project.link && (
+                              <a href={project.link} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: C.ink, fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>
+                                Open link
+                              </a>
+                            )}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-gray-700">{job.application_count ?? 0} applications</p>
-                          <span className={`inline-block mt-1 badge ${job.status === 'active' ? 'badge-success' : 'badge-warning'}`}>
-                            {job.status}
-                          </span>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {user.role === 'admin' && (
-          <section className="space-y-8">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Active Students</p>
-                <p className="mt-3 text-4xl font-bold text-blue-600">{students.length}</p>
-                <p className="text-xs text-gray-500 mt-2">Available for opportunities</p>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Registered Companies</p>
-                <p className="mt-3 text-4xl font-bold text-purple-600">{companies.length}</p>
-                <p className="text-xs text-gray-500 mt-2">In the network</p>
-              </div>
-              <div className="card">
-                <p className="text-sm font-semibold text-gray-600">Active Roles</p>
-                <p className="mt-3 text-4xl font-bold text-emerald-600">{jobs.length}</p>
-                <p className="text-xs text-gray-500 mt-2">Current openings</p>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Admin Quick Search</h2>
-                  <p className="text-gray-600 mt-1">Filter students and companies by name or details</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAdminFilter('students')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                      adminFilter === 'students'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Students
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdminFilter('companies')}
-                    className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                      adminFilter === 'companies'
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    Companies
-                  </button>
+                  ) : (
+                    <div style={{ background: C.surfaceAlt, border: `1px dashed ${C.border}`, borderRadius: 12, padding: '40px 28px', textAlign: 'center' }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6 }}>No projects yet.</p>
+                      <p style={{ fontSize: 13, color: C.inkSoft, marginBottom: 16 }}>Add a few projects on your profile to showcase your work here.</p>
+                      <button type="button" onClick={() => navigate('/profile')} className="dp-btn-ghost">Add projects</button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
-                <input
-                  value={adminQuery}
-                  onChange={(event) => setAdminQuery(event.target.value)}
-                  placeholder={adminFilter === 'students' ? 'Search by name or email...' : 'Search by company name...'}
-                  className="input-field md:col-span-2"
-                />
-                <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2.5 flex items-center justify-center font-semibold text-indigo-900">
-                  {adminFilter === 'students' ? filteredStudents.length : filteredCompanies.length} result{adminFilter === 'students' ? filteredStudents.length !== 1 ? 's' : '' : filteredCompanies.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-            </div>
+              {/* Recommendations + Applications */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
-            <div className="card">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                {adminFilter === 'students' ? 'Student Profiles' : 'Companies'}
-              </h3>
-              {adminFilter === 'students' ? (
-                filteredStudents.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">No students matched your search</p>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredStudents.slice(0, 5).map((student) => (
-                      <div key={student.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                        <p className="font-semibold text-gray-900">{student.full_name}</p>
-                        <p className="text-sm text-gray-600">{student.email}</p>
-                        <p className="text-xs text-gray-500 mt-1">{student.university || 'University not specified'}</p>
+                <div id="recommended-opportunities" className="dp-card">
+                  <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 4 }}>AI matched</p>
+                      <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Opportunities</h2>
+                    </div>
+                    <span className="dp-badge dp-badge-neutral">Top picks</span>
+                  </div>
+                  <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {recommendations.length === 0 ? (
+                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>
+                        Complete your profile and add skills to see recommendations.
+                      </p>
+                    ) : recommendations.map((rec) => (
+                      <div key={rec.job.id} className="dp-row">
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{rec.job.title}</p>
+                            <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{rec.job.company_name}</p>
+                            <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{rec.job.location || 'Remote'}</p>
+                          </div>
+                          <div className="dp-score-ring">{Math.round(rec.score)}%</div>
+                        </div>
+                        <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {rec.matched_skills.slice(0, 3).map((skill) => (
+                            <span key={skill} style={{ fontSize: 12, background: C.surfaceAlt, color: C.inkMid, borderRadius: 6, padding: '3px 10px' }}>{skill}</span>
+                          ))}
+                          {rec.matched_skills.length > 3 && (
+                            <span style={{ fontSize: 12, color: C.inkSoft }}>+{rec.matched_skills.length - 3} more</span>
+                          )}
+                        </div>
+                        {rec.missing_skills.length > 0 && (
+                          <p style={{ marginTop: 8, fontSize: 12, color: C.inkSoft }}>
+                            Missing: {rec.missing_skills.join(', ')}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
-                )
-              ) : filteredCompanies.length === 0 ? (
-                <p className="text-gray-600 text-center py-8">No companies matched your search</p>
-              ) : (
-                <div className="space-y-3">
-                  {filteredCompanies.slice(0, 5).map((company) => (
-                    <div key={company.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold text-gray-900">{company.company_name}</p>
-                        {company.is_verified && <span className="badge badge-success text-xs">Verified</span>}
+                </div>
+
+                <div id="recent-applications" className="dp-card">
+                  <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 4 }}>Activity</p>
+                      <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Applications</h2>
+                    </div>
+                    <span className="dp-badge dp-badge-neutral">Latest</span>
+                  </div>
+                  <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {applications.length === 0 ? (
+                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>
+                        You haven't applied to any roles yet.
+                      </p>
+                    ) : applications.slice(0, 5).map((item) => {
+                      const statusBadge =
+                        item.status === 'accepted' ? 'dp-badge-green' :
+                        item.status === 'rejected' ? 'dp-badge-red' : 'dp-badge-amber'
+                      return (
+                        <div key={item.id} className="dp-row">
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                            <div>
+                              <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{item.job.title}</p>
+                              <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>
+                                {item.job.company_name} · {formatDate(item.applied_at)}
+                              </p>
+                            </div>
+                            <span className={`dp-badge ${statusBadge}`}>{item.status_display}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══ COMPANY VIEW ══ */}
+          {user.role === 'company' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <div className="dp-card">
+                  <div className="dp-card-inner">
+                    <p className="dp-kicker" style={{ marginBottom: 10 }}>Verification</p>
+                    <span className={`dp-badge ${companyProfile?.is_verified ? 'dp-badge-green' : 'dp-badge-amber'}`}>
+                      {companyProfile?.is_verified ? 'Verified' : 'Pending'}
+                    </span>
+                  </div>
+                </div>
+                <StatCard label="Active roles" value={jobs.filter((j) => j.status === 'active').length} sub="Currently open" />
+                <StatCard label="Total positions" value={jobs.length} sub="All time" />
+              </div>
+
+              {/* Company info */}
+              <div className="dp-card">
+                <div className="dp-card-inner">
+                  <p className="dp-kicker" style={{ marginBottom: 8 }}>Company</p>
+                  <h2 className="dp-serif" style={{ fontSize: 26, fontWeight: 400, color: C.ink, marginBottom: 4 }}>
+                    {companyProfile?.company_name || 'Your company'}
+                  </h2>
+                  <p style={{ fontSize: 13, color: C.inkMid, marginBottom: 14 }}>{companyProfile?.industry || 'Industry not specified'}</p>
+                  <div className="dp-divider" style={{ marginBottom: 16 }} />
+                  <p style={{ fontSize: 14, color: C.inkMid, lineHeight: 1.75 }}>
+                    {companyProfile?.description || 'No company description available yet. Update your profile to tell students about your company.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Job form */}
+              <div className="dp-card">
+                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p className="dp-kicker" style={{ marginBottom: 4 }}>Post a role</p>
+                    <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Publish a new role</h2>
+                  </div>
+                  <span className="dp-badge dp-badge-neutral">Quick post</span>
+                </div>
+                <form onSubmit={handleJobSubmit}>
+                  <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                    {jobMessage && (
+                      <div style={{ background: C.successBg, border: `1px solid ${C.successBorder}`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: C.success }}>
+                        {jobMessage}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{company.industry || 'Industry not specified'}</p>
+                    )}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                      <FieldGroup label="Role title">
+                        <input value={jobForm.title} onChange={(e) => setJobForm((c) => ({ ...c, title: e.target.value }))} className="dp-field" placeholder="e.g. Frontend Engineer Intern" required />
+                      </FieldGroup>
+                      <FieldGroup label="Location">
+                        <input value={jobForm.location ?? ''} onChange={(e) => setJobForm((c) => ({ ...c, location: e.target.value }))} className="dp-field" placeholder="e.g. Remote, Bangalore" />
+                      </FieldGroup>
+                    </div>
+                    <FieldGroup label="Description">
+                      <textarea value={jobForm.description} onChange={(e) => setJobForm((c) => ({ ...c, description: e.target.value }))} className="dp-field" rows={4} placeholder="Tell candidates about this role…" required style={{ resize: 'vertical' }} />
+                    </FieldGroup>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                      <FieldGroup label="Type">
+                        <select value={jobForm.type} onChange={(e) => setJobForm((c) => ({ ...c, type: e.target.value }))} className="dp-field">
+                          <option value="full_time">Full time</option>
+                          <option value="part_time">Part time</option>
+                          <option value="internship">Internship</option>
+                          <option value="contract">Contract</option>
+                        </select>
+                      </FieldGroup>
+                      <FieldGroup label="Openings">
+                        <input type="number" min={1} value={jobForm.openings ?? 1} onChange={(e) => setJobForm((c) => ({ ...c, openings: Number(e.target.value) }))} className="dp-field" />
+                      </FieldGroup>
+                      <FieldGroup label="Deadline">
+                        <input type="date" value={jobForm.deadline ?? ''} onChange={(e) => setJobForm((c) => ({ ...c, deadline: e.target.value || null }))} className="dp-field" />
+                      </FieldGroup>
+                    </div>
+                  </div>
+                  <div style={{ padding: '16px 28px 22px', borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="submit" disabled={jobSaving} className="dp-btn-primary">
+                      {jobSaving ? 'Publishing…' : 'Publish role'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Job list */}
+              <div className="dp-card">
+                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p className="dp-kicker" style={{ marginBottom: 4 }}>Job board</p>
+                    <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Recent postings</h2>
+                  </div>
+                  <span className="dp-badge dp-badge-neutral">{jobs.length} roles</span>
+                </div>
+                <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {jobs.length === 0 ? (
+                    <div style={{ background: C.surfaceAlt, border: `1px dashed ${C.border}`, borderRadius: 12, padding: '40px', textAlign: 'center', color: C.inkSoft, fontSize: 13 }}>
+                      No job postings yet — create your first role above.
+                    </div>
+                  ) : jobs.slice(0, 5).map((job) => (
+                    <div key={job.id} className="dp-row">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+                        <div>
+                          <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{job.title}</p>
+                          <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{job.location || 'Remote'} · {job.type.replace('_', ' ')}</p>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                          <span style={{ fontSize: 12, color: C.inkSoft }}>{job.application_count ?? 0} applications</span>
+                          <span className={`dp-badge ${job.status === 'active' ? 'dp-badge-green' : 'dp-badge-amber'}`}>{job.status}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-          </section>
-        )}
+          )}
+
+          {/* ══ ADMIN VIEW ══ */}
+          {user.role === 'admin' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+                <StatCard label="Active students" value={students.length} sub="Available for opportunities" />
+                <StatCard label="Registered companies" value={companies.length} sub="In the network" />
+                <StatCard label="Active roles" value={jobs.length} sub="Current openings" />
+              </div>
+
+              {/* Search panel */}
+              <div className="dp-card">
+                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+                  <div>
+                    <p className="dp-kicker" style={{ marginBottom: 4 }}>Admin tools</p>
+                    <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Quick search</h2>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={() => setAdminFilter('students')} className={`dp-filter-btn ${adminFilter === 'students' ? 'active' : ''}`}>Students</button>
+                    <button type="button" onClick={() => setAdminFilter('companies')} className={`dp-filter-btn ${adminFilter === 'companies' ? 'active' : ''}`}>Companies</button>
+                  </div>
+                </div>
+                <div className="dp-card-inner">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
+                    <input
+                      value={adminQuery}
+                      onChange={(e) => setAdminQuery(e.target.value)}
+                      placeholder={adminFilter === 'students' ? 'Search by name or email…' : 'Search by company name…'}
+                      className="dp-field"
+                    />
+                    <div className="dp-stat-box" style={{ padding: '10px 18px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.ink }}>
+                        {adminFilter === 'students' ? filteredStudents.length : filteredCompanies.length} results
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Results */}
+              <div className="dp-card">
+                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}` }}>
+                  <p className="dp-kicker" style={{ marginBottom: 4 }}>{adminFilter === 'students' ? 'Students' : 'Companies'}</p>
+                  <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>
+                    {adminFilter === 'students' ? 'Student profiles' : 'Company directory'}
+                  </h2>
+                </div>
+                <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {adminFilter === 'students' ? (
+                    filteredStudents.length === 0 ? (
+                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>No students matched your search.</p>
+                    ) : filteredStudents.slice(0, 5).map((student) => (
+                      <div key={student.id} className="dp-row">
+                        <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{student.full_name}</p>
+                        <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{student.email}</p>
+                        <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{student.university || 'University not specified'}</p>
+                      </div>
+                    ))
+                  ) : (
+                    filteredCompanies.length === 0 ? (
+                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>No companies matched your search.</p>
+                    ) : filteredCompanies.slice(0, 5).map((company) => (
+                      <div key={company.id} className="dp-row">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div>
+                            <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{company.company_name}</p>
+                            <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{company.industry || 'Industry not specified'}</p>
+                            <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{company.location || 'Location not specified'}</p>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                            <span className={`dp-badge ${company.is_verified ? 'dp-badge-green' : 'dp-badge-amber'}`}>
+                              {company.is_verified ? 'Verified' : 'Pending'}
+                            </span>
+                            <select
+                              value={company.is_verified ? 'verified' : 'pending'}
+                              onChange={(event) => void handleToggleCompanyVerification(company.id, event.target.value === 'verified')}
+                              disabled={companySavingId === company.id}
+                              className="dp-field"
+                              style={{ width: 132, paddingInline: 12, paddingBlock: 8, fontSize: 12 }}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="verified">Verified</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }

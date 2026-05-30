@@ -33,8 +33,8 @@ export default function StudentsPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-slate-500">Restoring your session…</p>
+      <div className="page-shell flex items-center justify-center">
+        <p style={{ color: '#888780' }}>Restoring your session…</p>
       </div>
     )
   }
@@ -48,24 +48,30 @@ export default function StudentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Students</p>
-          <h1 className="text-3xl font-semibold text-slate-900 mt-2">Student directory</h1>
-          <p className="text-slate-600 mt-2">View student profiles and availability at a glance.</p>
+    <div className="page-shell">
+      <div className="page-container">
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <p className="page-kicker">Students</p>
+          <div className="max-w-2xl">
+            <h1 className="page-title">Student directory</h1>
+            <p className="page-subtitle">View student profiles and availability at a glance.</p>
+          </div>
+          <div className="rounded-3xl border border-[#d4d4ce] bg-white px-5 py-4 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.3em]" style={{ color: '#aaa9a2' }}>Overview</p>
+            <p className="mt-2 text-lg" style={{ color: '#1a1a18', fontFamily: "'DM Serif Display', serif" }}>{students.length} students</p>
+          </div>
         </div>
 
-        {error && <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700 mb-6">{error}</div>}
+        {error && <div className="mb-6 rounded-3xl border border-[#f09595] bg-[#fcebeb] p-4 text-[#a32d2d]">{error}</div>}
 
         {loading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">Loading students…</div>
+          <div className="card p-10 text-center" style={{ color: '#888780' }}>Loading students…</div>
         ) : students.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">No student profiles are available.</div>
+          <div className="card p-10 text-center" style={{ color: '#888780' }}>No student profiles are available.</div>
         ) : (
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-3xl border border-[#d4d4ce] bg-white shadow-sm">
             <table className="min-w-full border-separate border-spacing-0">
-              <thead className="bg-slate-100 text-left text-xs uppercase tracking-[0.2em] text-slate-600">
+              <thead className="text-left text-xs uppercase tracking-[0.2em]" style={{ background: '#f0efe9', color: '#888780' }}>
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">University</th>
@@ -76,12 +82,12 @@ export default function StudentsPage() {
               </thead>
               <tbody>
                 {students.map((student) => (
-                  <tr key={student.id} className="border-t border-slate-200 hover:bg-slate-50">
-                    <td className="px-6 py-4 text-slate-900">{student.full_name}</td>
-                    <td className="px-6 py-4 text-slate-600">{student.university || 'N/A'}</td>
-                    <td className="px-6 py-4 text-slate-600">{student.degree || 'N/A'}</td>
-                    <td className="px-6 py-4 text-slate-600">{student.is_available ? 'Available' : 'Unavailable'}</td>
-                    <td className="px-6 py-4 text-slate-600">{student.skill_count}</td>
+                  <tr key={student.id} className="border-t hover:bg-[#fafaf8]" style={{ borderColor: '#e8e8e4' }}>
+                    <td className="px-6 py-4" style={{ color: '#1a1a18' }}>{student.full_name}</td>
+                    <td className="px-6 py-4" style={{ color: '#888780' }}>{student.university || 'N/A'}</td>
+                    <td className="px-6 py-4" style={{ color: '#888780' }}>{student.degree || 'N/A'}</td>
+                    <td className="px-6 py-4" style={{ color: '#888780' }}>{student.is_available ? 'Available' : 'Unavailable'}</td>
+                    <td className="px-6 py-4" style={{ color: '#888780' }}>{student.skill_count}</td>
                   </tr>
                 ))}
               </tbody>

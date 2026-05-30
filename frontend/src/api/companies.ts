@@ -1,5 +1,5 @@
 import type { CompanyListItem, CompanyProfile, JobCard } from '../types/api'
-import { apiGet, apiPatch, apiPost } from './client'
+import { apiGet, apiPatch } from './client'
 
 export function getCompanies(params?: Record<string, string | number | boolean>) {
   return apiGet<CompanyListItem[]>('/companies/', params)
@@ -24,6 +24,15 @@ export function updateCompanyProfile(payload: Partial<{
   linkedin_url: string
 }>) {
   return apiPatch<CompanyProfile>('/companies/profile/', payload)
+}
+
+export function updateCompanyVerification(
+  companyId: number,
+  payload: Partial<{
+    is_verified: boolean
+  }>
+) {
+  return apiPatch<CompanyProfile>(`/companies/admin/${companyId}/`, payload)
 }
 
 export function getCompanyJobs(companyId: number) {

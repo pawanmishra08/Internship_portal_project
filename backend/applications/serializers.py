@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Application
-from students.serializers import StudentProfileListSerializer
+from students.serializers import StudentProfileSerializer
 from companies.serializers import JobListSerializer
+from recommendations.algorithm import score_student_for_job
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -46,9 +47,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
 class ApplicantSerializer(serializers.ModelSerializer):
     """Used by companies to see who applied to their jobs."""
-    student = StudentProfileListSerializer(read_only=True)
+    student = StudentProfileSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     resume_url = serializers.SerializerMethodField()
+    match_score = serializers.SerializerMethodField()
+    download_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -56,6 +59,7 @@ class ApplicantSerializer(serializers.ModelSerializer):
             'id', 'student',
             'status', 'status_display',
             'cover_letter', 'resume_url',
+            'match_score', 'download_url',
             'company_notes',
             'applied_at', 'updated_at',
         ]
@@ -67,6 +71,15 @@ class ApplicantSerializer(serializers.ModelSerializer):
         if resume and request:
             return request.build_absolute_uri(resume.url)
         return None
+
+    def get_match_score(self, obj):
+        return score_student_for_job(obj.student, obj.job)['score']
+
+    def get_download_url(self, obj):
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(f'/api/applications/{obj.pk}/document/')
+        return f'/api/applications/{obj.pk}/document/'
 
 
 class StatusUpdateSerializer(serializers.ModelSerializer):
