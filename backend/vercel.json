@@ -1,8 +1,0 @@
-{
-  "experimentalServices": {
-    "backend": {
-      "root": "backend",
-      "routePrefix": "/_backend"
-    }
-  }
-}
