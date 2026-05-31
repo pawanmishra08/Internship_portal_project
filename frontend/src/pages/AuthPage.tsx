@@ -1,55 +1,52 @@
-import { useEffect, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useEffect, useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import sitelogo from '../assets/sitelogo.png';
 
-type Mode = 'login' | 'register'
+type Mode = 'login' | 'register';
 
 type AuthForm = {
-  full_name: string
-  email: string
-  password: string
+  full_name: string;
+  email: string;
+  password: string;
   role: 'student' | 'company'
-}
+};
 
 const emptyForm: AuthForm = {
   full_name: '',
   email: '',
   password: '',
   role: 'student',
-}
+};
 
 export default function AuthPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { error, login, register, status, clearError } = useAuth()
-  const [mode, setMode] = useState<Mode>('login')
-  const [form, setForm] = useState<AuthForm>(emptyForm)
-  const [submitting, setSubmitting] = useState(false)
+  const navigate = useNavigate();
+  const { error, login, register, status, clearError } = useAuth();
 
-  const nextFromQuery = new URLSearchParams(location.search).get('next')
-  const nextFromState = (location.state as { from?: string } | null)?.from
-  const redirectTarget = nextFromState || nextFromQuery || '/dashboard'
+  const [mode, setMode] = useState<Mode>('login');
+  const [form, setForm] = useState<AuthForm>(emptyForm);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') {
-      navigate(redirectTarget, { replace: true })
+      navigate('/dashboard', { replace: true });
     }
-  }, [navigate, redirectTarget, status])
+  }, [navigate, status]);
 
   if (status === 'authenticated') {
-    return <Navigate to={redirectTarget} replace />
+    return <Navigate to="/dashboard" replace />;
   }
 
-  const isRegister = mode === 'register'
+  const isRegister = mode === 'register';
 
   function updateField<K extends keyof AuthForm>(key: K, value: AuthForm[K]) {
-    setForm((current) => ({ ...current, [key]: value }))
+    setForm((current) => ({ ...current, [key]: value }));
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    clearError()
-    setSubmitting(true)
+    event.preventDefault();
+    clearError();
+    setSubmitting(true);
 
     try {
       if (isRegister) {
@@ -58,230 +55,196 @@ export default function AuthPage() {
           password: form.password,
           full_name: form.full_name,
           role: form.role,
-        })
+        });
       } else {
         await login({
           email: form.email,
           password: form.password,
-        })
+        });
       }
-
-      navigate(redirectTarget, { replace: true })
+      navigate('/dashboard', { replace: true });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   }
 
   return (
-    <main className="auth-root min-h-screen bg-white flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl rounded-xl overflow-hidden border border-gray-200 shadow-sm grid md:grid-cols-2">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-          {/* Left Panel */}
-          <div className="hidden md:flex flex-col justify-between p-12 bg-gray-50 border-r border-gray-200">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div
-                className="auth-serif w-9 h-9 rounded-lg flex items-center justify-center text-sm text-white"
-                style={{ background: '#1a1a18', letterSpacing: '-0.5px' }}
-              >
-                IP
+        .auth-root {
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+        .auth-title {
+          font-family: 'Space Grotesk', sans-serif;
+        }
+      `}</style>
+
+      <main className="auth-root min-h-screen bg-gradient-to-br from-slate-950 via-zinc-900 to-black flex items-center justify-center p-6 overflow-hidden relative">
+        {/* Background Elements */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(59,130,246,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(139,92,246,0.12),transparent_50%)]" />
+
+        <div className="w-full max-w-6xl grid md:grid-cols-2 gap-8 items-center relative z-10">
+
+          {/* Left Panel - Hero */}
+          <div className="hidden md:flex flex-col justify-center p-12 relative">
+            <div className="mb-12">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-3xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-white font-bold text-3xl shadow-xl">
+                  <img src={sitelogo} alt="Internify Logo" className="w-full h-full object-contain " />
+                </div>
+                <span className="text-2xl font-semibold tracking-tighter text-white">Internify</span>
               </div>
-              <span
-                className="text-xs font-medium tracking-widest uppercase"
-                style={{ color: '#888780' }}
-              >
-                Internship Portal
-              </span>
             </div>
 
-            {/* Hero */}
-            <div className="flex-1 flex flex-col justify-center py-10">
-              <h2
-                className="auth-serif text-4xl leading-tight mb-4"
-                style={{ color: '#1a1a18', fontWeight: 400 }}
-              >
-                Find your perfect{' '}
-                <em style={{ color: '#888780' }}>internship</em>
-                {' '}— faster.
-              </h2>
-              <p className="text-sm leading-relaxed max-w-xs" style={{ color: '#888780', fontWeight: 300 }}>
-                AI-matched roles, one-click applications, and real-time tracking — built for students who mean business.
+            <div className="space-y-6">
+              <h1 className="auth-title text-6xl md:text-7xl font-semibold leading-none tracking-tighter text-white">
+                Land your<br />
+                dream <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">internship</span>
+              </h1>
+              <p className="text-xl text-slate-400 max-w-md">
+                AI-powered matching. Instant applications. Real opportunities.
               </p>
             </div>
 
-            {/* Stats */}
-            <div className="flex gap-6">
+            <div className="mt-16 grid grid-cols-3 gap-8">
               {[
-                { num: '500+', label: 'Internships' },
-                { num: '200+', label: 'Companies' },
-                { num: 'AI', label: 'Matching' },
-              ].map(({ num, label }) => (
-                <div key={label} className="border-t pt-3" style={{ borderColor: '#d4d4ce' }}>
-                  <div className="auth-serif text-2xl" style={{ color: '#1a1a18' }}>{num}</div>
-                  <div className="text-xs uppercase tracking-widest mt-0.5 font-medium" style={{ color: '#aaa9a2' }}>
-                    {label}
-                  </div>
+                { value: "500+", label: "Live Roles" },
+                { value: "180+", label: "Companies" },
+                { value: "98%", label: "Match Rate" },
+              ].map((stat, i) => (
+                <div key={i} className="text-center">
+                  <div className="text-4xl font-semibold text-white mb-1">{stat.value}</div>
+                  <div className="text-sm text-slate-500 tracking-widest uppercase">{stat.label}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Right Panel - Form */}
-          <div className="bg-white px-10 py-12 flex flex-col justify-center">
+          <div className="bg-white/95 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 md:p-14 border border-white/20">
             {/* Tabs */}
-            <div className="flex border-b mb-8" style={{ borderColor: '#e8e8e4' }}>
+            <div className="flex bg-zinc-100 rounded-2xl p-1 mb-10">
               <button
                 type="button"
-                onClick={() => { clearError(); setMode('login') }}
-                className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+                onClick={() => { clearError(); setMode('login'); }}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${
+                  mode === 'login' 
+                    ? 'bg-white shadow text-zinc-900' 
+                    : 'text-zinc-500 hover:text-zinc-700'
+                }`}
               >
-                Sign in
+                Sign In
               </button>
               <button
                 type="button"
-                onClick={() => { clearError(); setMode('register') }}
-                className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
+                onClick={() => { clearError(); setMode('register'); }}
+                className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${
+                  mode === 'register'
+                    ? 'bg-white shadow text-zinc-900'
+                    : 'text-zinc-500 hover:text-zinc-700'
+                }`}
               >
-                Create account
+                Create Account
               </button>
             </div>
 
-            {/* Heading */}
-            <h1 className="auth-serif text-3xl mb-1" style={{ color: '#1a1a18', fontWeight: 400 }}>
-              {isRegister ? 'Get started' : 'Welcome back'}
-            </h1>
-            <p className="text-sm mb-7" style={{ color: '#888780', fontWeight: 300 }}>
+            <h2 className="auth-title text-4xl tracking-tighter text-zinc-900 mb-2">
+              {isRegister ? "Let's get you started" : "Welcome back"}
+            </h2>
+            <p className="text-zinc-600 mb-8">
               {isRegister
-                ? 'Join as a student or company.'
-                : 'Sign in to continue to your dashboard.'}
+                ? "Join as student, company"
+                : "Sign in to continue your journey"}
             </p>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              {/* Full Name */}
+            <form className="space-y-6" onSubmit={handleSubmit}>
               {isRegister && (
                 <div>
-                  <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
-                    Full name
-                  </label>
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 font-medium mb-1.5 block">Full Name</label>
                   <input
                     type="text"
-                    placeholder="Jane Doe"
+                    placeholder="Alex Rivera"
                     value={form.full_name}
                     onChange={(e) => updateField('full_name', e.target.value)}
                     required
-                    className="auth-input"
+                    className="w-full px-6 py-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-base"
                   />
                 </div>
               )}
 
-              {/* Email */}
               <div>
-                <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
-                  Email address
-                </label>
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-medium mb-1.5 block">Email Address</label>
                 <input
                   type="email"
-                  placeholder="jane@example.com"
+                  placeholder="you@email.com"
                   value={form.email}
                   onChange={(e) => updateField('email', e.target.value)}
                   required
-                  className="auth-input"
+                  className="w-full px-6 py-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-base"
                 />
               </div>
 
-              {/* Password */}
               <div>
-                <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
-                  Password
-                </label>
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-medium mb-1.5 block">Password</label>
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => updateField('password', e.target.value)}
-                  minLength={5}
+                  minLength={6}
                   required
-                  className="auth-input"
+                  className="w-full px-6 py-4 bg-zinc-50 border border-zinc-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-base"
                 />
               </div>
 
-              {/* Role Toggle */}
               {isRegister && (
                 <div>
-                  <label className="block text-xs font-medium tracking-widest uppercase mb-1.5" style={{ color: '#888780' }}>
-                    I am a
-                  </label>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <label className="text-xs uppercase tracking-widest text-zinc-500 font-medium mb-3 block">I am a</label>
+                  <div className="grid grid-cols-2 gap-3">
                     {(['student', 'company'] as const).map((r) => (
                       <div
                         key={r}
-                        className={`role-opt ${form.role === r ? 'selected' : ''}`}
                         onClick={() => updateField('role', r)}
+                        className={`px-5 py-4 rounded-2xl border text-center font-medium cursor-pointer transition-all capitalize text-sm
+                          ${form.role === r
+                            ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-sm'
+                            : 'border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50'}`}
                       >
-                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                        {r}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Error */}
               {error && (
-                <div
-                  className="text-sm rounded-md px-3 py-2.5"
-                  style={{
-                    color: '#a32d2d',
-                    background: '#fcebeb',
-                    border: '0.5px solid #f09595',
-                  }}
-                >
+                <div className="bg-red-50 text-red-600 border border-red-100 px-5 py-3.5 rounded-2xl text-sm">
                   {error}
                 </div>
               )}
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2.5 text-xs font-medium tracking-widest uppercase rounded-md transition-opacity disabled:opacity-50"
-                style={{
-                  background: '#1a1a18',
-                  color: '#ffffff',
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-                onMouseOver={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseOut={e => (e.currentTarget.style.opacity = '1')}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-semibold rounded-2xl transition-all text-base tracking-wider disabled:opacity-70 mt-4 shadow-lg shadow-blue-500/30"
               >
-                {submitting ? 'Processing…' : isRegister ? 'Create account' : 'Sign in'}
+                {submitting ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
               </button>
 
-              {/* Switch Mode */}
               <button
                 type="button"
-                onClick={() => { clearError(); setMode(mode === 'login' ? 'register' : 'login') }}
-                className="w-full py-2.5 text-xs font-medium rounded-md transition-colors"
-                style={{
-                  background: 'none',
-                  color: '#888780',
-                  border: '0.5px solid #d4d4ce',
-                  fontFamily: "'DM Sans', sans-serif",
-                  cursor: 'pointer',
-                }}
-                onMouseOver={e => {
-                  e.currentTarget.style.borderColor = '#1a1a18'
-                  e.currentTarget.style.color = '#1a1a18'
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.borderColor = '#d4d4ce'
-                  e.currentTarget.style.color = '#888780'
-                }}
+                onClick={() => { clearError(); setMode(isRegister ? 'login' : 'register'); }}
+                className="w-full py-3 text-sm text-zinc-500 hover:text-zinc-700 transition-colors"
               >
-                {isRegister ? 'Already have an account?' : "Don't have an account?"}
+                {isRegister ? "Already have an account? Sign in" : "Don't have an account? Create one"}
               </button>
             </form>
           </div>
-
         </div>
-    </main>
-  )
+      </main>
+    </>
+  );
 }

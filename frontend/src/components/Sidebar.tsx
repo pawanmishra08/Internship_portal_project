@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import sitelogo from '../assets/sitelogo.png'
 
 const portalTitles: Record<string, string> = {
   student: 'Student Portal',
@@ -23,12 +24,14 @@ export default function Sidebar() {
   const visibleItems = navItems.filter((item) => !user || item.roles.includes(user.role))
 
   return (
-    <aside className="w-72 min-h-screen border-r shadow-xl flex flex-col" style={{ background: '#1f1f1c', borderColor: '#353530' }}>
+    <aside className="w-72 border-r flex flex-col" style={{ background: '#1f1f1c', borderColor: '#353530', boxShadow: 'none' }}>
       {/* Logo Section */}
-      <div className="p-6 border-b" style={{ borderColor: '#353530' }}>
+      <div className="p-6 border-b" style={{ borderColor: '#353530', position: 'sticky', top: 0, zIndex: 20, background: '#1f1f1c' }}>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg flex items-center justify-center font-black text-lg text-white shadow-lg" style={{ background: '#f0efe9', color: '#1a1a18', fontFamily: "'DM Serif Display', serif" }}>
-            IP
+
+                  <img src={sitelogo} alt="Internify Logo" className="w-full h-full object-contain " />
+
           </div>
           <div>
             <h1 className="text-xl text-white" style={{ fontFamily: "'DM Serif Display', serif", fontWeight: 400 }}>Internship</h1>
@@ -38,23 +41,21 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 72 }}>
         {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-colors duration-200 ${
+                  isActive ? 'text-white' : 'text-gray-300 hover:text-white'
+                }`
+              }
+              style={({ isActive }) =>
                 isActive
-                  ? 'text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white'
-              }`
-            }
-            style={({ isActive }) =>
-              isActive
-                ? { background: '#2b2b27', boxShadow: '0 10px 25px rgba(0,0,0,0.25)' }
-                : { background: 'transparent' }
-            }
+                  ? { background: '#2b2b27', borderLeft: '3px solid #f0efe9' }
+                  : { background: 'transparent' }
+              }
           >
             <span className="text-lg">
               {(() => {
@@ -110,7 +111,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t mt-auto text-center" style={{ borderColor: '#353530' }}>
+      <div className="p-4 border-t mt-auto text-center" style={{ borderColor: '#353530', position: 'sticky', bottom: 0, zIndex: 20, background: '#1f1f1c' }}>
         <p className="text-xs uppercase tracking-widest" style={{ color: '#77766f' }}>© 2026</p>
         <p className="text-xs mt-1" style={{ color: '#aaa9a2' }}>Internship Portal</p>
       </div>
