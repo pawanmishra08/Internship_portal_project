@@ -84,6 +84,9 @@ export type JobCard = {
   id: number
   title: string
   company_name: string
+  description?: string
+  requirements?: string
+  responsibilities?: string
   company_location?: string
   is_verified: boolean
   location?: string
@@ -181,6 +184,9 @@ export type RecommendationItem = {
     availability: number
     location: number
     profile_completeness: number
+    role_alignment: number
+    work_mode: number
+    freshness: number
   }
 }
 

@@ -2,7 +2,7 @@ from rest_framework import status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -13,6 +13,7 @@ from .serializers import (
     CompanyProfileSerializer,
     JobSerializer,
     JobListSerializer,
+    PublicJobListSerializer,
 )
 from .permissions import IsJobOwner, IsVerifiedCompany
 
@@ -152,6 +153,24 @@ class JobListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         company = self.request.user.company_profile
         serializer.save(company=company)
+
+
+class PublicJobListView(generics.ListAPIView):
+    """GET /api/companies/jobs/public/ → browse public active jobs pre-auth."""
+    serializer_class = PublicJobListSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['title', 'description', 'required_skills__name', 'company__company_name']
+    filterset_fields = ['type', 'location']
+
+    def get_queryset(self):
+        return Job.objects.filter(
+            status='active',
+            company__is_verified=True,
+        ).select_related('company').prefetch_related('required_skills')
+
+    def get_serializer_context(self):
+        return {'request': self.request}
 
 
 class JobDetailView(generics.RetrieveUpdateDestroyAPIView):

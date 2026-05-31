@@ -98,3 +98,12 @@ class JobListSerializer(serializers.ModelSerializer):
 
     def get_skill_names(self, obj):
         return list(obj.required_skills.values_list('name', flat=True))
+
+
+class PublicJobListSerializer(JobListSerializer):
+    """Public card payload with expanded text fields for detail popup."""
+
+    class Meta(JobListSerializer.Meta):
+        fields = JobListSerializer.Meta.fields + [
+            'description', 'requirements', 'responsibilities',
+        ]

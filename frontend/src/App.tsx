@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import ProtectedRoute from './components/ProtectedRoute'
-import { useAuth } from './context/AuthContext'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import Layout from './components/Layout'
@@ -11,26 +10,14 @@ import CompaniesPage from './pages/CompaniesPage'
 import StudentProfilePage from './pages/StudentProfilePage'
 import StudentsPage from './pages/StudentsPage'
 import SkillsAdminPage from './pages/SkillsAdminPage'
-
-function EntryRedirect() {
-  const { status } = useAuth()
-
-  if (status === 'loading') {
-    return (
-      <div className="app-loader">
-        <span>Restoring session</span>
-      </div>
-    )
-  }
-
-  return <Navigate to={status === 'authenticated' ? '/dashboard' : '/auth'} replace />
-}
+import PublicJobsHomePage from './pages/PublicJobsHomePage'
 
 function App() {
   return (
     <div className="app-shell">
       <Routes>
-        <Route path="/" element={<EntryRedirect />} />
+        <Route path="/" element={<PublicJobsHomePage />} />
+        <Route path="/jobs" element={<PublicJobsHomePage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
@@ -43,7 +30,7 @@ function App() {
             <Route path="/admin/skills" element={<SkillsAdminPage />} />
           </Route>
         </Route>
-        <Route path="*" element={<EntryRedirect />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )

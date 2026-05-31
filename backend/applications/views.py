@@ -83,7 +83,7 @@ class JobApplicantsView(generics.ListAPIView):
         qs = Application.objects.filter(
             job_id=job_id,
             job__company__user=self.request.user
-        ).select_related('student__user').prefetch_related('student__skills')
+        ).select_related('student__user', 'job').prefetch_related('student__skills', 'job__required_skills')
 
         status_filter = self.request.query_params.get('status')
         if status_filter:

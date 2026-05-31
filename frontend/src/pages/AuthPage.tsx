@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 type Mode = 'login' | 'register'
@@ -20,19 +20,24 @@ const emptyForm: AuthForm = {
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { error, login, register, status, clearError } = useAuth()
   const [mode, setMode] = useState<Mode>('login')
   const [form, setForm] = useState<AuthForm>(emptyForm)
   const [submitting, setSubmitting] = useState(false)
 
+  const nextFromQuery = new URLSearchParams(location.search).get('next')
+  const nextFromState = (location.state as { from?: string } | null)?.from
+  const redirectTarget = nextFromState || nextFromQuery || '/dashboard'
+
   useEffect(() => {
     if (status === 'authenticated') {
-      navigate('/dashboard', { replace: true })
+      navigate(redirectTarget, { replace: true })
     }
-  }, [navigate, status])
+  }, [navigate, redirectTarget, status])
 
   if (status === 'authenticated') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={redirectTarget} replace />
   }
 
   const isRegister = mode === 'register'
@@ -61,82 +66,14 @@ export default function AuthPage() {
         })
       }
 
-      navigate('/dashboard', { replace: true })
+      navigate(redirectTarget, { replace: true })
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
-
-        .auth-root {
-          font-family: 'DM Sans', sans-serif;
-        }
-        .auth-serif {
-          font-family: 'DM Serif Display', serif;
-        }
-        .auth-input {
-          width: 100%;
-          padding: 9px 12px;
-          font-size: 14px;
-          font-family: 'DM Sans', sans-serif;
-          background: #f7f7f5;
-          border: 0.5px solid #d4d4ce;
-          border-radius: 6px;
-          color: #1a1a18;
-          outline: none;
-          transition: border-color 0.15s, background 0.15s;
-          appearance: none;
-        }
-        .auth-input:focus {
-          border-color: #1a1a18;
-          background: #ffffff;
-        }
-        .auth-input::placeholder {
-          color: #aaa9a2;
-        }
-        .role-opt {
-          padding: 8px;
-          text-align: center;
-          font-size: 13px;
-          border: 0.5px solid #d4d4ce;
-          border-radius: 6px;
-          cursor: pointer;
-          color: #888780;
-          transition: all 0.15s;
-          user-select: none;
-        }
-        .role-opt.selected {
-          border-color: #1a1a18;
-          color: #1a1a18;
-          background: #f7f7f5;
-          font-weight: 500;
-        }
-        .auth-tab {
-          padding: 0.5rem 0;
-          margin-right: 1.75rem;
-          font-size: 13px;
-          font-weight: 500;
-          background: none;
-          border: none;
-          border-bottom: 1.5px solid transparent;
-          cursor: pointer;
-          color: #aaa9a2;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          transition: color 0.15s, border-color 0.15s;
-          margin-bottom: -0.5px;
-        }
-        .auth-tab.active {
-          color: #1a1a18;
-          border-bottom-color: #1a1a18;
-        }
-      `}</style>
-
-      <main className="auth-root min-h-screen bg-white flex items-center justify-center p-4">
+    <main className="auth-root min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-4xl rounded-xl overflow-hidden border border-gray-200 shadow-sm grid md:grid-cols-2">
 
           {/* Left Panel */}
@@ -345,7 +282,6 @@ export default function AuthPage() {
           </div>
 
         </div>
-      </main>
-    </>
+    </main>
   )
 }

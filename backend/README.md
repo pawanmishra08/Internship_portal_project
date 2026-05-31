@@ -299,6 +299,24 @@ The Django admin is available at:
 http://127.0.0.1:8000/admin/
 ```
 
+## Demo Data Seeding
+
+Use the robust demo seeder to create students, companies, jobs, applications, and a demo admin account.
+
+```bash
+python manage.py seed_demo_data --reset --export-file demo_credentials.json
+```
+
+Useful options:
+
+```bash
+python manage.py seed_demo_data --students 10 --companies 5 --jobs-per-company 4 --applications-per-student 3
+python manage.py seed_demo_data --password DemoPass123! --export-file demo_credentials.csv
+python manage.py seed_demo_data --no-export
+```
+
+By default, credentials are exported to `demo_credentials.json` in the current backend directory.
+
 ## Frontend Setup
 
 1. Go to the frontend project:

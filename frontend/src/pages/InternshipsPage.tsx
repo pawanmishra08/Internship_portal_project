@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getJobs } from '../api/jobs'
 import { createApplication } from '../api/applications'
@@ -6,6 +7,7 @@ import type { JobCard } from '../types/api'
 
 export default function InternshipsPage() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [jobs, setJobs] = useState<JobCard[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +37,27 @@ export default function InternshipsPage() {
 
     void loadJobs()
   }, [user?.role])
+
+  useEffect(() => {
+    const jobParam = searchParams.get('job')
+    if (!jobParam || !jobs.length || selectedJob) {
+      return
+    }
+
+    const targetId = Number(jobParam)
+    if (!Number.isFinite(targetId)) {
+      return
+    }
+
+    const found = jobs.find((job) => job.id === targetId)
+    if (found) {
+      setSelectedJob(found)
+      setCoverLetter('')
+      const nextParams = new URLSearchParams(searchParams)
+      nextParams.delete('job')
+      setSearchParams(nextParams, { replace: true })
+    }
+  }, [jobs, searchParams, selectedJob, setSearchParams])
 
   return (
     <div className="page-shell">
@@ -68,7 +91,7 @@ export default function InternshipsPage() {
         ) : jobs.length === 0 ? (
           <div className="card p-10 text-center" style={{ color: '#888780' }}>No internships available yet.</div>
         ) : (
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {jobs.filter((job) => {
               if (!searchQuery) return true
               const q = searchQuery.toLowerCase()

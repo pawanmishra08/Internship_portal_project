@@ -8,6 +8,9 @@ class BreakdownSerializer(serializers.Serializer):
     availability = serializers.FloatField()
     location = serializers.FloatField()
     profile_completeness = serializers.FloatField()
+    role_alignment = serializers.FloatField()
+    work_mode = serializers.FloatField()
+    freshness = serializers.FloatField()
 
 
 class RecommendationSerializer(serializers.Serializer):

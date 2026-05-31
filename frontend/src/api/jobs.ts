@@ -5,6 +5,10 @@ export function getJobs(params?: Record<string, string | number | boolean>) {
   return apiGet<JobCard[]>('/companies/jobs/', params)
 }
 
+export function getPublicJobs(params?: Record<string, string | number | boolean>) {
+  return apiGet<JobCard[]>('/companies/jobs/public/', params)
+}
+
 export function getJob(id: number) {
   return apiGet<JobDetail>(`/companies/jobs/${id}/`)
 }
