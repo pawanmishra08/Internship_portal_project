@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getApplications } from '../api/applications'
-import { getCompanies, getOwnCompanyProfile, updateCompanyVerification } from '../api/companies'
+import { getCompany, getCompanies, getCompanyJobs, getOwnCompanyProfile, updateCompanyVerification } from '../api/companies'
 import { createJob, getJobs } from '../api/jobs'
 import { getRecommendations } from '../api/recommendations'
-import { getStudentProfile, getStudents } from '../api/students'
+import { getStudent, getStudentProfile, getStudents } from '../api/students'
+import { COMMON_COLORS } from '../utils/themeTokens'
 import type {
   ApplicationItem,
   CompanyListItem,
@@ -50,113 +51,7 @@ function profileScore(profile: StudentProfile | null) {
 }
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
-const C = {
-  ink: '#18181b',
-  inkMid: '#52525b',
-  inkSoft: '#a1a1aa',
-  surface: '#ffffff',
-  surfaceAlt: '#f4f4f5',
-  border: '#e4e4e7',
-  success: '#16a34a',
-  successBg: '#f0fdf4',
-  successBorder: '#bbf7d0',
-  error: '#dc2626',
-  errorBg: '#fef2f2',
-  errorBorder: '#fecaca',
-  amber: '#d97706',
-  amberBg: '#fffbeb',
-}
-
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@300;400;500;600&display=swap');
-
-  .dp-root { font-family: 'Instrument Sans', sans-serif; background: #f4f4f5; min-height: 100vh; }
-  .dp-serif { font-family: 'Playfair Display', Georgia, serif; }
-
-  .dp-field {
-    width: 100%; padding: 10px 14px; font-family: 'Instrument Sans', sans-serif;
-    font-size: 14px; background: #ffffff; border: 1px solid #e4e4e7;
-    border-radius: 8px; color: #18181b; outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s; appearance: none;
-  }
-  .dp-field:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
-  .dp-field::placeholder { color: #a1a1aa; }
-
-  .dp-card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px; overflow: hidden; }
-  .dp-card-inner { padding: 24px 28px; }
-
-  .dp-kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #a1a1aa; }
-  .dp-label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #a1a1aa; margin-bottom: 6px; }
-
-  .dp-btn-primary {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 20px; background: #18181b; color: #ffffff;
-    font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.04em; border: none; border-radius: 8px; cursor: pointer;
-    transition: opacity 0.15s; white-space: nowrap;
-  }
-  .dp-btn-primary:hover { opacity: 0.82; }
-  .dp-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .dp-btn-ghost {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 18px; background: transparent; color: #18181b;
-    font-family: 'Instrument Sans', sans-serif; font-size: 13px; font-weight: 500;
-    border: 1px solid #e4e4e7; border-radius: 8px; cursor: pointer;
-    transition: border-color 0.15s, background 0.15s; white-space: nowrap;
-  }
-  .dp-btn-ghost:hover { border-color: #18181b; background: #f4f4f5; }
-
-  .dp-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
-  .dp-badge-neutral { background: #f4f4f5; color: #52525b; }
-  .dp-badge-green   { background: #f0fdf4; color: #16a34a; }
-  .dp-badge-amber   { background: #fffbeb; color: #d97706; }
-  .dp-badge-red     { background: #fef2f2; color: #dc2626; }
-  .dp-badge-blue    { background: #eff6ff; color: #2563eb; }
-
-  .dp-stat-box { background: #f4f4f5; border-radius: 10px; padding: 16px 18px; }
-
-  .dp-row {
-    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
-    padding: 18px 22px; transition: box-shadow 0.15s, transform 0.15s;
-  }
-  .dp-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
-
-  .dp-divider { height: 1px; background: #e4e4e7; }
-
-  .dp-filter-btn {
-    padding: 8px 16px; font-family: 'Instrument Sans', sans-serif; font-size: 13px;
-    font-weight: 500; border-radius: 8px; border: 1px solid #e4e4e7;
-    cursor: pointer; transition: all 0.15s; background: transparent; color: #52525b;
-  }
-  .dp-filter-btn.active { background: #18181b; color: #fff; border-color: #18181b; }
-  .dp-filter-btn:not(.active):hover { border-color: #18181b; color: #18181b; }
-
-  .dp-progress-track { height: 6px; background: #e4e4e7; border-radius: 999px; overflow: hidden; }
-  .dp-progress-fill  { height: 100%; background: #18181b; border-radius: 999px; transition: width 0.6s ease; }
-
-  .dp-nav-link {
-    display: block; padding: 10px 14px; border-radius: 8px; font-size: 13px;
-    font-weight: 500; color: #52525b; text-decoration: none;
-    transition: background 0.12s, color 0.12s;
-  }
-  .dp-nav-link:hover { background: #f4f4f5; color: #18181b; }
-
-  .dp-project-card {
-    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
-    padding: 20px; transition: box-shadow 0.15s, transform 0.15s;
-  }
-  .dp-project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
-
-  .dp-score-ring {
-    width: 56px; height: 56px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 600;
-    color: #18181b; background: #f4f4f5; border: 2px solid #18181b; flex-shrink: 0;
-  }
-
-  .dp-header-band { background: #18181b; color: #fff; padding: 40px 48px 36px; }
-`
+const C = COMMON_COLORS
 
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -201,6 +96,13 @@ export default function DashboardPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [adminQuery, setAdminQuery] = useState('')
   const [adminFilter, setAdminFilter] = useState<'students' | 'companies'>('students')
+  const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null)
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState<StudentProfile | null>(null)
+  const [selectedCompanyProfile, setSelectedCompanyProfile] = useState<CompanyProfile | null>(null)
+  const [selectedCompanyJobs, setSelectedCompanyJobs] = useState<JobCard[]>([])
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
   const filteredStudents = useMemo(
     () => students.filter((s) =>
@@ -217,6 +119,73 @@ export default function DashboardPage() {
   )
 
   const studentCompletion = profileScore(profile)
+  const verifiedCompanyCount = useMemo(
+    () => companies.filter((company) => company.is_verified).length,
+    [companies],
+  )
+  const pendingCompanyCount = companies.length - verifiedCompanyCount
+  const activeJobCount = useMemo(
+    () => jobs.filter((job) => job.status === 'active').length,
+    [jobs],
+  )
+  const adminAnchors = [
+    { href: '#platform-overview', label: 'Overview' },
+    { href: '#admin-profile-explorer', label: 'Profiles' },
+    { href: '#hiring-ops', label: 'Hiring' },
+  ]
+
+  async function openStudentPreview(studentId: number) {
+    setAdminFilter('students')
+    setSelectedStudentId(studentId)
+    setPreviewError(null)
+    setPreviewLoading(true)
+    try {
+      const student = await getStudent(studentId)
+      setSelectedStudentProfile(student)
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Unable to load student profile')
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  async function openCompanyPreview(companyId: number) {
+    setAdminFilter('companies')
+    setSelectedCompanyId(companyId)
+    setPreviewError(null)
+    setPreviewLoading(true)
+    try {
+      const [company, roles] = await Promise.all([getCompany(companyId), getCompanyJobs(companyId)])
+      setSelectedCompanyProfile(company)
+      setSelectedCompanyJobs(roles)
+    } catch (err) {
+      setPreviewError(err instanceof Error ? err.message : 'Unable to load company profile')
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  function focusAdminExplorer(view: 'students' | 'companies') {
+    if (view === 'students') {
+      const firstStudent = filteredStudents[0]
+      if (firstStudent) {
+        void openStudentPreview(firstStudent.id)
+      } else {
+        setAdminFilter('students')
+        setPreviewError(null)
+      }
+    } else {
+      const firstCompany = filteredCompanies[0]
+      if (firstCompany) {
+        void openCompanyPreview(firstCompany.id)
+      } else {
+        setAdminFilter('companies')
+        setPreviewError(null)
+      }
+    }
+
+    document.getElementById('admin-profile-explorer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   useEffect(() => {
     if (status === 'anonymous') { navigate('/auth', { replace: true }); return }
@@ -242,6 +211,11 @@ export default function DashboardPage() {
             getStudents({ is_available: true }), getCompanies(), getJobs({ status: 'active' }),
           ])
           setStudents(studentData); setCompanies(companyData); setJobs(jobsData)
+          if (studentData.length > 0) {
+            void openStudentPreview(studentData[0].id)
+          } else if (companyData.length > 0) {
+            void openCompanyPreview(companyData[0].id)
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load dashboard')
@@ -274,6 +248,7 @@ export default function DashboardPage() {
     try {
       const updatedCompany = await updateCompanyVerification(companyId, { is_verified: nextVerified })
       setCompanies((current) => current.map((company) => (company.id === updatedCompany.id ? updatedCompany : company)))
+      setSelectedCompanyProfile((current) => (current?.id === updatedCompany.id ? updatedCompany : current))
       setSuccessMessage(nextVerified ? 'Company verified successfully.' : 'Company verification removed.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update company verification')
@@ -294,8 +269,7 @@ export default function DashboardPage() {
     return (
       <div className="dp-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 40, height: 40, border: `2px solid ${C.border}`, borderTopColor: C.ink, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div className="common-spinner" style={{ borderColor: C.border, borderTopColor: C.ink, margin: '0 auto 16px' }} />
           <p style={{ color: C.inkSoft, fontSize: 14 }}>Loading your dashboard…</p>
         </div>
       </div>
@@ -305,14 +279,12 @@ export default function DashboardPage() {
   const roleLabel = user.role.charAt(0).toUpperCase() + user.role.slice(1)
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="dp-root">
+    <div className="dp-root">
 
         {/* ── Header band ── */}
         <div className="dp-header-band">
-          <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
+          <div className="dp-shell" style={{ paddingTop: 0, paddingBottom: 0 }}>
+            <div className="dp-hero-copy">
               <div>
                 <p className="dp-kicker" style={{ color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>Welcome back</p>
                 <h1 className="dp-serif" style={{ fontSize: 36, fontWeight: 400, color: '#fff', margin: 0, lineHeight: 1.15 }}>{user.full_name}</h1>
@@ -321,7 +293,7 @@ export default function DashboardPage() {
                   {' '}— your dashboard is tailored to your role.
                 </p>
               </div>
-              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.15)', paddingLeft: 24 }}>
+              <div className="dp-hero-panel">
                 <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>Member since</p>
                 <p className="dp-serif" style={{ fontSize: 22, color: '#fff', fontWeight: 400 }}>{formatDate(user.date_joined)}</p>
               </div>
@@ -330,7 +302,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Body ── */}
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 32px 64px' }}>
+        <div className="dp-shell">
 
           {successMessage && (
             <div style={{ background: C.successBg, border: `1px solid ${C.successBorder}`, borderRadius: 10, padding: '12px 18px', color: C.success, fontSize: 14, marginBottom: 24 }}>
@@ -653,26 +625,67 @@ export default function DashboardPage() {
           {user.role === 'admin' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-              {/* Stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-                <StatCard label="Active students" value={students.length} sub="Available for opportunities" />
-                <StatCard label="Registered companies" value={companies.length} sub="In the network" />
-                <StatCard label="Active roles" value={jobs.length} sub="Current openings" />
-              </div>
-
-              {/* Search panel */}
-              <div className="dp-card">
-                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-                  <div>
-                    <p className="dp-kicker" style={{ marginBottom: 4 }}>Admin tools</p>
-                    <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>Quick search</h2>
+              <div className="dp-callout">
+                <div className="dp-section-header" style={{ alignItems: 'flex-start' }}>
+                  <div style={{ maxWidth: 640 }}>
+                    <p className="dp-kicker" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: 8 }}>Admin cockpit</p>
+                    <h2 className="dp-serif" style={{ fontSize: 28, fontWeight: 400, color: '#fff', marginBottom: 8 }}>Manage the student and company pipeline from one view</h2>
+                    <p className="dp-callout-muted" style={{ lineHeight: 1.7 }}>
+                      Review student readiness, verify companies, and keep hiring moving with a clear workspace for each workflow.
+                    </p>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button type="button" onClick={() => setAdminFilter('students')} className={`dp-filter-btn ${adminFilter === 'students' ? 'active' : ''}`}>Students</button>
-                    <button type="button" onClick={() => setAdminFilter('companies')} className={`dp-filter-btn ${adminFilter === 'companies' ? 'active' : ''}`}>Companies</button>
+                  <div className="dp-chip-row">
+                    <button type="button" onClick={() => focusAdminExplorer('students')} className="dp-chip" style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}>Students</button>
+                    <button type="button" onClick={() => focusAdminExplorer('companies')} className="dp-chip" style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}>Companies</button>
+                    {adminAnchors.map((anchor) => (
+                      <a key={anchor.href} href={anchor.href} className="dp-chip" style={{ background: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.15)', color: '#fff' }}>
+                        {anchor.label}
+                      </a>
+                    ))}
                   </div>
                 </div>
-                <div className="dp-card-inner">
+                <div className="dp-mini-grid" style={{ marginTop: 18 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
+                    <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Students</p>
+                    <p className="dp-serif" style={{ fontSize: 26, color: '#fff', fontWeight: 400 }}>{students.length}</p>
+                    <p className="dp-callout-muted" style={{ marginTop: 6 }}>Available profiles ready for review.</p>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
+                    <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Companies</p>
+                    <p className="dp-serif" style={{ fontSize: 26, color: '#fff', fontWeight: 400 }}>{companies.length}</p>
+                    <p className="dp-callout-muted" style={{ marginTop: 6 }}>{pendingCompanyCount} pending verification.</p>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 18px' }}>
+                    <p style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 6 }}>Hiring</p>
+                    <p className="dp-serif" style={{ fontSize: 26, color: '#fff', fontWeight: 400 }}>{activeJobCount}</p>
+                    <p className="dp-callout-muted" style={{ marginTop: 6 }}>Currently active job openings.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="dp-mini-grid" id="platform-overview">
+                <StatCard label="Active students" value={students.length} sub="Available for opportunities" />
+                <StatCard label="Registered companies" value={companies.length} sub="In the network" />
+                <StatCard label="Verified companies" value={verifiedCompanyCount} sub="Ready for student browsing" />
+                <StatCard label="Active roles" value={activeJobCount} sub="Current openings" />
+              </div>
+
+              <div id="admin-profile-explorer" className="dp-workflow-card">
+                <div className="dp-workflow-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div className="dp-section-header">
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 4 }}>Profile explorer</p>
+                      <h2 className="dp-serif" style={{ fontSize: 24, fontWeight: 400, color: C.ink }}>
+                        {adminFilter === 'students' ? 'Student profiles' : 'Company profiles'}
+                      </h2>
+                    </div>
+                    <div className="dp-chip-row">
+                      <button type="button" onClick={() => focusAdminExplorer('students')} className={`dp-chip ${adminFilter === 'students' ? 'active' : ''}`}>Students</button>
+                      <button type="button" onClick={() => focusAdminExplorer('companies')} className={`dp-chip ${adminFilter === 'companies' ? 'active' : ''}`}>Companies</button>
+                    </div>
+                  </div>
+
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center' }}>
                     <input
                       value={adminQuery}
@@ -686,64 +699,185 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Results */}
-              <div className="dp-card">
-                <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}` }}>
-                  <p className="dp-kicker" style={{ marginBottom: 4 }}>{adminFilter === 'students' ? 'Students' : 'Companies'}</p>
-                  <h2 className="dp-serif" style={{ fontSize: 22, fontWeight: 400, color: C.ink }}>
-                    {adminFilter === 'students' ? 'Student profiles' : 'Company directory'}
-                  </h2>
-                </div>
-                <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {adminFilter === 'students' ? (
-                    filteredStudents.length === 0 ? (
-                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>No students matched your search.</p>
-                    ) : filteredStudents.slice(0, 5).map((student) => (
-                      <div key={student.id} className="dp-row">
-                        <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{student.full_name}</p>
-                        <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{student.email}</p>
-                        <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{student.university || 'University not specified'}</p>
-                      </div>
-                    ))
-                  ) : (
-                    filteredCompanies.length === 0 ? (
-                      <p style={{ fontSize: 13, color: C.inkSoft, textAlign: 'center', padding: '24px 0' }}>No companies matched your search.</p>
-                    ) : filteredCompanies.slice(0, 5).map((company) => (
-                      <div key={company.id} className="dp-row">
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div>
-                            <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{company.company_name}</p>
-                            <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{company.industry || 'Industry not specified'}</p>
-                            <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{company.location || 'Location not specified'}</p>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                            <span className={`dp-badge ${company.is_verified ? 'dp-badge-green' : 'dp-badge-amber'}`}>
-                              {company.is_verified ? 'Verified' : 'Pending'}
-                            </span>
-                            <select
-                              value={company.is_verified ? 'verified' : 'pending'}
-                              onChange={(event) => void handleToggleCompanyVerification(company.id, event.target.value === 'verified')}
-                              disabled={companySavingId === company.id}
-                              className="dp-field"
-                              style={{ width: 132, paddingInline: 12, paddingBlock: 8, fontSize: 12 }}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 0.95fr) minmax(0, 1.05fr)', gap: 20, alignItems: 'start' }}>
+                    <div>
+                      <p className="dp-kicker" style={{ marginBottom: 10 }}>{adminFilter === 'students' ? 'Available students' : 'Registered companies'}</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {adminFilter === 'students' ? (
+                          filteredStudents.length === 0 ? (
+                            <div className="dp-empty">No students matched your search.</div>
+                          ) : filteredStudents.map((student) => (
+                            <button
+                              key={student.id}
+                              type="button"
+                              onClick={() => void openStudentPreview(student.id)}
+                              className="dp-row"
+                              style={{ textAlign: 'left', borderColor: selectedStudentId === student.id ? C.ink : C.border, background: selectedStudentId === student.id ? '#fafafa' : '#fff' }}
                             >
-                              <option value="pending">Pending</option>
-                              <option value="verified">Verified</option>
-                            </select>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                                <div>
+                                  <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{student.full_name}</p>
+                                  <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{student.university || 'University not specified'}</p>
+                                  <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{student.degree || 'Degree not specified'}</p>
+                                </div>
+                                <span className={`dp-badge ${student.is_available ? 'dp-badge-green' : 'dp-badge-amber'}`}>
+                                  {student.is_available ? 'Available' : 'Busy'}
+                                </span>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          filteredCompanies.length === 0 ? (
+                            <div className="dp-empty">No companies matched your search.</div>
+                          ) : filteredCompanies.map((company) => (
+                            <button
+                              key={company.id}
+                              type="button"
+                              onClick={() => void openCompanyPreview(company.id)}
+                              className="dp-row"
+                              style={{ textAlign: 'left', borderColor: selectedCompanyId === company.id ? C.ink : C.border, background: selectedCompanyId === company.id ? '#fafafa' : '#fff' }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                                <div>
+                                  <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{company.company_name}</p>
+                                  <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{company.industry || 'Industry not specified'}</p>
+                                  <p style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>{company.location || 'Location not specified'}</p>
+                                </div>
+                                <span className={`dp-badge ${company.is_verified ? 'dp-badge-green' : 'dp-badge-amber'}`}>
+                                  {company.is_verified ? 'Verified' : 'Pending'}
+                                </span>
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      {previewLoading ? (
+                        <div className="dp-empty">Loading profile preview…</div>
+                      ) : previewError ? (
+                        <div className="dp-empty" style={{ color: C.error }}>{previewError}</div>
+                      ) : adminFilter === 'students' ? (
+                        selectedStudentProfile ? (
+                          <div className="dp-card" style={{ overflow: 'hidden' }}>
+                            <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}` }}>
+                              <p className="dp-kicker" style={{ marginBottom: 4 }}>Student profile</p>
+                              <h3 className="dp-serif" style={{ fontSize: 24, fontWeight: 400, color: C.ink }}>{selectedStudentProfile.full_name}</h3>
+                              <p style={{ fontSize: 13, color: C.inkMid, marginTop: 5 }}>{selectedStudentProfile.email}</p>
+                            </div>
+                            <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                              <div className="dp-mini-grid">
+                                <StatCard label="Profile complete" value={`${profileScore(selectedStudentProfile)}%`} sub="Based on filled fields" />
+                                <StatCard label="Skills" value={selectedStudentProfile.skills.length} sub="Tagged skills" />
+                              </div>
+                              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                <button type="button" onClick={() => navigate('/students')} className="dp-btn-ghost">Open students directory</button>
+                              </div>
+                              <div className="dp-workflow-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                                <div>
+                                  <p className="dp-kicker" style={{ marginBottom: 6 }}>Academic details</p>
+                                  <div className="dp-row" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>University: {selectedStudentProfile.university || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Degree: {selectedStudentProfile.degree || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Role goal: {selectedStudentProfile.target_role || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Availability: {selectedStudentProfile.is_available ? 'Available' : 'Unavailable'}</p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="dp-kicker" style={{ marginBottom: 6 }}>Work mode</p>
+                                  <div className="dp-row" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Preferred mode: {selectedStudentProfile.preferred_work_mode || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Location: {selectedStudentProfile.location || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Phone: {selectedStudentProfile.phone || 'Not specified'}</p>
+                                    <p style={{ color: C.inkMid, fontSize: 13 }}>Graduation: {selectedStudentProfile.graduation_year || 'Not specified'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="dp-kicker" style={{ marginBottom: 8 }}>Skills</p>
+                                <div className="dp-chip-row">
+                                  {selectedStudentProfile.skills.length === 0 ? (
+                                    <span className="dp-empty" style={{ padding: '10px 14px', width: '100%', textAlign: 'left' }}>No skills listed.</span>
+                                  ) : selectedStudentProfile.skills.map((skill) => (
+                                    <span key={skill.id} className="dp-chip">{skill.name}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null
+                      ) : selectedCompanyProfile ? (
+                        <div className="dp-card" style={{ overflow: 'hidden' }}>
+                          <div style={{ padding: '22px 28px 16px', borderBottom: `1px solid ${C.border}` }}>
+                            <p className="dp-kicker" style={{ marginBottom: 4 }}>Company profile</p>
+                            <h3 className="dp-serif" style={{ fontSize: 24, fontWeight: 400, color: C.ink }}>{selectedCompanyProfile.company_name}</h3>
+                            <p style={{ fontSize: 13, color: C.inkMid, marginTop: 5 }}>{selectedCompanyProfile.industry || 'Industry not specified'} · {selectedCompanyProfile.location || 'Location not specified'}</p>
+                          </div>
+                          <div className="dp-card-inner" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                            <div className="dp-mini-grid">
+                              <StatCard label="Open roles" value={selectedCompanyJobs.length} sub="Jobs posted by company" />
+                              <StatCard label="Status" value={selectedCompanyProfile.is_verified ? 'Verified' : 'Pending'} sub="Visibility state" />
+                            </div>
+                              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleToggleCompanyVerification(selectedCompanyProfile.id, !selectedCompanyProfile.is_verified)}
+                                  className="dp-btn-primary"
+                                  disabled={companySavingId === selectedCompanyProfile.id}
+                                >
+                                  {selectedCompanyProfile.is_verified ? 'Remove verification' : 'Verify company'}
+                                </button>
+                                <button type="button" onClick={() => navigate('/companies')} className="dp-btn-ghost">Open companies directory</button>
+                              </div>
+                            <div className="dp-workflow-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                              <div>
+                                <p className="dp-kicker" style={{ marginBottom: 6 }}>Overview</p>
+                                <div className="dp-row" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                  <p style={{ color: C.inkMid, fontSize: 13 }}>Tagline: {selectedCompanyProfile.tagline || 'Not specified'}</p>
+                                  <p style={{ color: C.inkMid, fontSize: 13 }}>Website: {selectedCompanyProfile.website || 'Not specified'}</p>
+                                  <p style={{ color: C.inkMid, fontSize: 13 }}>Size: {selectedCompanyProfile.size || 'Not specified'}</p>
+                                  <p style={{ color: C.inkMid, fontSize: 13 }}>LinkedIn: {selectedCompanyProfile.linkedin_url || 'Not specified'}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <p className="dp-kicker" style={{ marginBottom: 6 }}>About</p>
+                                <div className="dp-row">
+                                  <p style={{ color: C.inkMid, fontSize: 13, lineHeight: 1.7 }}>
+                                    {selectedCompanyProfile.description || 'No company description available yet.'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="dp-kicker" style={{ marginBottom: 8 }}>Recent roles</p>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                                {selectedCompanyJobs.length === 0 ? (
+                                  <div className="dp-empty">No roles posted yet.</div>
+                                ) : selectedCompanyJobs.slice(0, 3).map((job) => (
+                                  <div key={job.id} className="dp-row">
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                                      <div>
+                                        <p style={{ fontSize: 15, fontWeight: 600, color: C.ink }}>{job.title}</p>
+                                        <p style={{ fontSize: 13, color: C.inkMid, marginTop: 3 }}>{job.location || 'Remote'}</p>
+                                      </div>
+                                      <span className={`dp-badge ${job.status === 'active' ? 'dp-badge-green' : 'dp-badge-amber'}`}>{job.status}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
-    </>
   )
 }

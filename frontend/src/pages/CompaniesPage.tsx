@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { getCompanies, getOwnCompanyProfile } from '../api/companies'
 import { createJob, getJob, getJobs, updateJob } from '../api/jobs'
 import { updateCompanyProfile } from '../api/companies'
+import { COMMON_COLORS } from '../utils/themeTokens'
 import type { CompanyListItem, CompanyProfile, JobCard, JobDetail, JobFormPayload } from '../types/api'
 
 const initialJobForm: JobFormPayload = {
@@ -22,125 +23,7 @@ const initialJobForm: JobFormPayload = {
 }
 
 // ─── Shared design tokens ────────────────────────────────────────────────────
-const C = {
-  ink: '#18181b',
-  inkMid: '#52525b',
-  inkSoft: '#a1a1aa',
-  surface: '#ffffff',
-  surfaceAlt: '#f4f4f5',
-  border: '#e4e4e7',
-  borderHover: '#18181b',
-  accent: '#18181b',
-  accentText: '#ffffff',
-  success: '#16a34a',
-  successBg: '#f0fdf4',
-  successBorder: '#bbf7d0',
-  error: '#dc2626',
-  errorBg: '#fef2f2',
-  errorBorder: '#fecaca',
-}
-
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Instrument+Sans:wght@300;400;500;600&display=swap');
-
-  .cp-root { font-family: 'Instrument Sans', sans-serif; background: #f4f4f5; min-height: 100vh; }
-  .cp-serif { font-family: 'Playfair Display', Georgia, serif; }
-
-  .cp-field {
-    width: 100%; padding: 10px 14px; font-family: 'Instrument Sans', sans-serif;
-    font-size: 14px; background: #ffffff; border: 1px solid #e4e4e7;
-    border-radius: 8px; color: #18181b; outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    appearance: none;
-  }
-  .cp-field:focus { border-color: #18181b; box-shadow: 0 0 0 3px rgba(24,24,27,0.06); }
-  .cp-field::placeholder { color: #a1a1aa; }
-
-  .cp-card {
-    background: #ffffff; border: 1px solid #e4e4e7;
-    border-radius: 16px; overflow: hidden;
-  }
-  .cp-card-inner { padding: 28px; }
-
-  .cp-label {
-    display: block; font-size: 11px; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: #a1a1aa; margin-bottom: 6px;
-  }
-  .cp-section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 26px; font-weight: 400; color: #18181b; margin: 0;
-  }
-  .cp-kicker {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #a1a1aa;
-  }
-  .cp-btn-primary {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 20px; background: #18181b; color: #ffffff;
-    font-family: 'Instrument Sans', sans-serif; font-size: 13px;
-    font-weight: 600; letter-spacing: 0.04em; border: none;
-    border-radius: 8px; cursor: pointer; transition: opacity 0.15s;
-    white-space: nowrap;
-  }
-  .cp-btn-primary:hover { opacity: 0.82; }
-  .cp-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .cp-btn-ghost {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 10px 18px; background: transparent; color: #18181b;
-    font-family: 'Instrument Sans', sans-serif; font-size: 13px;
-    font-weight: 500; border: 1px solid #e4e4e7;
-    border-radius: 8px; cursor: pointer; transition: border-color 0.15s, background 0.15s;
-    white-space: nowrap;
-  }
-  .cp-btn-ghost:hover { border-color: #18181b; background: #f4f4f5; }
-  .cp-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .cp-badge {
-    display: inline-block; padding: 3px 10px; border-radius: 999px;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase;
-  }
-  .cp-badge-neutral { background: #f4f4f5; color: #52525b; }
-  .cp-badge-green { background: #f0fdf4; color: #16a34a; }
-  .cp-badge-amber { background: #fffbeb; color: #d97706; }
-
-  .cp-stat-box {
-    background: #f4f4f5; border-radius: 10px; padding: 16px 18px;
-  }
-
-  .cp-job-row {
-    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px;
-    padding: 20px 24px; transition: box-shadow 0.15s, transform 0.15s;
-  }
-  .cp-job-row:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); transform: translateY(-1px); }
-
-  .cp-company-card {
-    background: #ffffff; border: 1px solid #e4e4e7; border-radius: 16px;
-    padding: 24px; transition: box-shadow 0.15s, transform 0.15s;
-  }
-  .cp-company-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.07); transform: translateY(-2px); }
-
-  .cp-divider { height: 1px; background: #e4e4e7; margin: 0; }
-
-  .cp-nav-link {
-    display: block; padding: 10px 14px; border-radius: 8px; font-size: 13px;
-    font-weight: 500; color: #52525b; text-decoration: none;
-    transition: background 0.12s, color 0.12s;
-  }
-  .cp-nav-link:hover { background: #f4f4f5; color: #18181b; }
-
-  .cp-header-band {
-    background: #18181b; color: #fff; padding: 40px 48px 36px;
-  }
-
-  .cp-search-wrap { position: relative; }
-  .cp-search-wrap input { padding-left: 36px !important; }
-  .cp-search-icon {
-    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-    width: 16px; height: 16px; color: #a1a1aa; pointer-events: none;
-  }
-`
+const C = COMMON_COLORS
 
 const INDUSTRY_OPTIONS = [
   { value: '', label: 'Select industry' },
@@ -324,10 +207,7 @@ export default function CompaniesPage() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <>
-      <style>{styles}</style>
-
-      <div className="cp-root">
+    <div className="cp-root">
         {/* ── Page Header ── */}
         <div className="cp-header-band">
           <div style={{ maxWidth: 1400, margin: '0 auto' }}>
@@ -707,6 +587,5 @@ export default function CompaniesPage() {
           )}
         </div>
       </div>
-    </>
   )
 }

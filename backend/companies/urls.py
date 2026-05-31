@@ -5,6 +5,7 @@ from .views import (
     CompanyPublicDetailView,
     CompanyAdminDetailView,
     JobListCreateView,
+    PublicJobListView,
     JobDetailView,
     CompanyJobsView,
 )
@@ -15,6 +16,7 @@ urlpatterns = [
     path('<int:pk>/', CompanyPublicDetailView.as_view()),    # public profile
     path('admin/<int:pk>/', CompanyAdminDetailView.as_view()),
     path('<int:pk>/jobs/', CompanyJobsView.as_view()),       # jobs by company
+    path('jobs/public/', PublicJobListView.as_view()),       # public pre-auth listing
     path('jobs/', JobListCreateView.as_view()),              # browse / create
     path('jobs/<int:pk>/', JobDetailView.as_view()),         # detail / edit / delete
 ]

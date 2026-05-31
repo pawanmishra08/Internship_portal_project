@@ -17,6 +17,14 @@ class RecommendationView(APIView):
     """
     permission_classes = [IsStudent]
 
+    @staticmethod
+    def _parse_int(value, default, min_value=1, max_value=50):
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return default
+        return max(min(parsed, max_value), min_value)
+
     def get(self, request):
         try:
             student = request.user.student_profile
@@ -32,13 +40,14 @@ class RecommendationView(APIView):
                 status=400
             )
 
-        limit = min(int(request.query_params.get('limit', 20)), 50)
+        limit = self._parse_int(request.query_params.get('limit'), default=20, max_value=50)
         top = request.query_params.get('top')
 
         results = get_recommendations(student, limit=limit)
 
         if top:
-            results = results[:int(top)]
+            top_value = self._parse_int(top, default=limit, max_value=limit)
+            results = results[:top_value]
 
         serializer = RecommendationSerializer(results, many=True)
         return Response({
